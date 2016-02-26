@@ -1,0 +1,66 @@
+
+
+
+
+
+=== Basic network config ===
+The camera has 192.168.0.1/24 adress. The detector pc has to be configured likewise.
+
+Example as an alias on another interface eno1:
+
+auto eno1:1
+iface eno1:1 inet static
+            address 192.168.0.100
+            netmask 255.255.255.0
+            mtu 1500
+
+            
+
+=== Advanced system and network tuning ===
+
+The camera will send the images as small (1490) udp datagrams, as fast as it can (87.82 MB/s on december 2015).
+The result can be loss of part of the image.
+
+Using FIFO realtime mode can help.
+Tuning network buffers can help.
+Changing ethernet card can save your skin, and avoid you loosing weeks fine tuning muddy cards.
+
+== Realtime mode ==
+
+In : /etc/security/limits.conf 
+Add : 
+watier    -       rtprio  5
+
+In soft :
+  pthread_t this_thread = pthread_self(); 
+  struct sched_param params;     
+  params.sched_priority = 5; 
+  ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+  if (ret != 0) { std::cout << "Check /etc/security/limits.conf " << std::endl; }
+
+== Kernel tuning ==
+man udp
+
+Change in /etc/sysctl.conf and validate with sysctl -p
+
+net.core.rmem_max = 256217728
+net.core.wmem_max = 256217728
+net.ipv4.udp_mem = 131072 262144 524288
+net.ipv4.udp_rmem_min = 65536
+net.core.netdev_max_backlog = 65536 
+net.core.somaxconn = 1024
+
+
+=== Possible problems with network ===
+
+
+== List of known to work cards ==
+= Embedded motherboard card on optiplex 980:
+ Intel Corporation 82578DM Gigabit Network Connection (rev 05)
+
+== List of non working cards ==
+= Intel pro 1000 on PCI card (82541GI) (debian 7 & 9):
+Intel Corporation 82541GI Gigabit Ethernet Controller
+Intel Corporation 82541PI Gigabit Ethernet Controller (rev 05)
+
+

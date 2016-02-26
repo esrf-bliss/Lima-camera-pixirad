@@ -1,0 +1,6 @@
+*~
+*bck
+*.swp
+*target*
+build/
+*.o
