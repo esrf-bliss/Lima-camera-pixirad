@@ -251,6 +251,28 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	
 	
+	
+	regcomp(&regex, ".*PIXIRAD-8 SN 8000.*" , 0);
+	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  m_sensorConfigAsic = "PII";
+	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
+	  m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
+	  
+ 	  DEB_TRACE() << "A pixirad 8 model has been detected ";
+	}
+	else{
+	  m_sensorConfigAsic = "PII";
+	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
+	  m_sensorConfigBuild = "PX1"; // PX1 PX2 PX8
+	  
+ 	  DEB_TRACE() << "No detector detected(!) - configuring lima for Pixirad 1 module ";
+	  
+	}
+	
+	
+	
+	
+	
 	}
 	
 	

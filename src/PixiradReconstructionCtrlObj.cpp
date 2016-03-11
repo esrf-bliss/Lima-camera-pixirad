@@ -74,9 +74,6 @@ Data  _ReconstructionTask::process(Data& src)
      ushort *destinationAsInt = reinterpret_cast<ushort*>(destination);     
 //      unsigned short *local_buffer_ptr
      
-     //ushort temporaryBufferLocal[8*476*512*15]; // TODO: change for one module. // This is local_buffer_ptr
-     unsigned short *temporaryBufferLocal;
-     temporaryBufferLocal=(unsigned short *)calloc(8*476*512*15, sizeof(unsigned short));
      
      
      DEB_TRACE()<< "FPGA Conversion"; // the hard way 
@@ -106,10 +103,12 @@ Data  _ReconstructionTask::process(Data& src)
      
      Sens.conv_table.depth = 15;
      
+     //ushort temporaryBufferLocal[8*476*512*15]; // TODO: change for one module. // This is local_buffer_ptr
+     unsigned short *temporaryBufferLocal;
+     temporaryBufferLocal=(unsigned short *)calloc(nbModules*pixieRows*pixieCols*codeDepth, sizeof(unsigned short));
      
      
-     // First step bytes swapping 
-     
+     // First step bytes swapping      
      DEB_TRACE()<< "FPGA (1) Swapping"; 
      for(int i=0;i<nbModules;i++){
        for(int j=0;j<colsPerDout*pixieRows;j++){

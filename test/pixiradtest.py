@@ -12,10 +12,12 @@ import time
 import socket # For hostaname
 
 
-#if (socket.gethostname() == "linfalcon"):
-    #sys.path.append('/home/watier/LimaGitLab/Lima_test/install')
-#if (socket.gethostname() == "lid00limabois"):
-    #sys.path.append('/users/watier/Lima_test/install')
+if (socket.gethostname() == "linfalcon"):
+    sys.path.append('/home/watier/LimaGitLab/Lima_test/install')
+if (socket.gethostname() == "lid00limabois"):
+    sys.path.append('/users/watier/Lima_test/install')
+if (socket.gethostname() == "lbm05pixirad"):
+    sys.path.append('/users/watier/Git/lima/install')
 
 
 from Lima import Core
@@ -90,14 +92,21 @@ print control.Status()
 print "\n\n\n\n ======= ACQUISITION OBJECT ======== \n"
 
 acq = control.acquisition()
+
 saving = control.saving()
-pars=saving.getParameters()
-pars.directory='/tmp/test_du_stagiaire'
-pars.prefix='test_stagiaire'
-pars.suffix='.edf'
-pars.fileFormat=Core.CtSaving.EDF
-pars.savingMode=Core.CtSaving.AutoFrame
-saving.setParameters(pars)
+
+def newsave(newsaving, basename):
+  pars=newsaving.getParameters()
+  pars.directory='/tmp/test_du_stagiaire'
+  pars.prefix=basename
+  pars.suffix='.edf'
+  pars.fileFormat=Core.CtSaving.EDF
+  pars.savingMode=Core.CtSaving.AutoFrame
+  newsaving.setParameters(pars)
+
+
+newsave(saving , time.strftime('test_stagiaire_%Y_%m_%d-%H_%M_%S'))
+
 
 #print "\n\n\n\n ========== ROI ==========\n "
 ##
