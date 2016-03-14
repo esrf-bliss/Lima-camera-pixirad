@@ -80,6 +80,7 @@ camera_interface.setRunConfigMode(camera.DATA)
 camera_interface.setHybridMode(camera.CDTE)
 camera_interface.setSensorConfigBuild(camera.PX8)
 
+camera_interface.setColorMode(camera.COLMODE_1COL0)
 
 
 
@@ -106,6 +107,14 @@ def newsave(newsaving, basename):
 
 
 newsave(saving , time.strftime('test_stagiaire_%Y_%m_%d-%H_%M_%S'))
+
+
+def externalTrigger():
+  acq.setTriggerMode(Core.ExtTrigMult)
+
+def internalTrigger():
+  acq.setTriggerMode(Core.IntTrig)
+
 
 
 #print "\n\n\n\n ========== ROI ==========\n "

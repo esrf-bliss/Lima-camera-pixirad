@@ -123,20 +123,41 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	bytes_recvd = recvfrom(localSocket, (char*)weather, 291,  0, NULL, 0);
 	 	//DEB_TRACE() << "Weather thread: "<<DEB_VAR2(bytes_recvd, weather);
 	
-	regex_t regex;
+	
+	// Here we find the interresting values within the udp "weather" stream of the detector. 
+	// Thing changed between pixirad1 and 8 so, for some, there is two regexp slightly different.
+	
+	regex_t regex;  // pixi8 or all
+	regex_t regexpixi1style; // pixi1 only
+	
+	
+	
 	if (bytes_recvd > 0){
 	
+	  
+	  
 // 	READ_TCOLD_DONE 22.80 �C
 	regcomp(&regex, "READ_TCOLD_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierCold)){	
-//  	  DEB_TRACE() << "Cold side of the peltier : "<<DEB_VAR1(m_temperaturePeltierCold);
+	regcomp(&regexpixi1style, "READ_TCOLD_DONE ([-0123456789.]+)",  REG_EXTENDED);
+	
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierCold) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierCold) 
+	){		
+ 	  DEB_TRACE() << "Cold side of the peltier : "<<DEB_VAR1(m_temperaturePeltierCold);
  	}
  	else DEB_TRACE() << "NO PELTIER COLD INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
+	
+	
+	
 	// // 	READ_THOT_DONE 15.95 �C
 	regcomp(&regex, "READ_THOT_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierHot)){	
-// 	  DEB_TRACE() << "Hot side of the peltier : "<<DEB_VAR1(m_temperaturePeltierHot);
+	regcomp(&regexpixi1style, "READ_THOT_DONE ([-0123456789.]+)",  REG_EXTENDED);
+	
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierHot) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierHot) 
+	){		
+	  DEB_TRACE() << "Hot side of the peltier : "<<DEB_VAR1(m_temperaturePeltierHot);
 	}
 	else DEB_TRACE() << "NO PELTIER HOT INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -145,8 +166,12 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	// 	READ_HV_DONE 0.14 V
 	regcomp(&regex, "READ_HV_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_HighVoltageTension)){	
-// 	  DEB_TRACE() << "HV tension : "<<DEB_VAR1(m_HighVoltageTension);
+	regcomp(&regexpixi1style, "READ_HV ([-0123456789.]+)",  REG_EXTENDED);
+	
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_HighVoltageTension) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_HighVoltageTension) 
+	){	
+	  DEB_TRACE() << "HV tension : "<<DEB_VAR1(m_HighVoltageTension);
 	}
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -154,17 +179,23 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	// 	READ_BOX_RH 27.25 %
 	regcomp(&regex, "READ_BOX_RH ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxHumidity)){	
-// 	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
+	regcomp(&regexpixi1style, "READ_BOX_HUM ([-0123456789.]+)",  REG_EXTENDED);
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxHumidity) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxHumidity) 
+	){		
+	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
 	}
 	else DEB_TRACE() << "NO HUMIDITY INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
 	
-// 	READ_BOX_TEMP_DONE 19.70 �C
+// 	READ_BOX_TEMP_DONE 19.70 �C  Pixirad 8
 	
 	regcomp(&regex, "READ_BOX_TEMP_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxTemperature)){	
-// 	  DEB_TRACE() << "Box temperature : "<<DEB_VAR1(m_boxTemperature);
+	regcomp(&regexpixi1style, "READ_BOX_TEMP ([-0123456789.]+)",  REG_EXTENDED);
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxTemperature) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxTemperature) 
+	){	
+	  DEB_TRACE() << "Box temperature : "<<DEB_VAR1(m_boxTemperature);
 	}
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -174,7 +205,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	regcomp(&regex, "READ_PELTIER_PWR ([-0123456789.]+)",  REG_EXTENDED);
 	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_peltierPower)){	
-// 	  DEB_TRACE() << "Peltier Power : "<<DEB_VAR1(m_peltierPower);
+	  DEB_TRACE() << "Peltier Power : "<<DEB_VAR1(m_peltierPower);
 	}
 	else DEB_TRACE() << "NO PELTIER POWER INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -258,15 +289,15 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
 	  m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
 	  
- 	  DEB_TRACE() << "A pixirad 8 model has been detected ";
+ 	  DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
 	}
-	else{
+	regcomp(&regex, ".*BOX_SERIAL 1018.*" , 0);
+	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  m_sensorConfigAsic = "PII";
 	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
 	  m_sensorConfigBuild = "PX1"; // PX1 PX2 PX8
 	  
- 	  DEB_TRACE() << "No detector detected(!) - configuring lima for Pixirad 1 module ";
-	  
+ 	  DEB_TRACE() << "A pixirad 1 model has been detected  - AUTOCONFIGURATION based on UDP stream";	  
 	}
 	
 	

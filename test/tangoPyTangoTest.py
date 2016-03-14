@@ -5,13 +5,13 @@ limaccd = PyTango.DeviceProxy("d05/pixirad/pixirad8")
 
 
 def initialSetupForPX8():
-  doit = true
-  while(doit):
-    try:
+  #doit = True
+  #while(doit):
+    #try:
       pixi.cooling_temperature_setpoint = -30
       pixi.high_voltage_biais = 400
       pixi.dead_time_free_mode = 'DEAD_TIME_FREE_MODE_ON'
-      pixi.color_mode = 'COLMODE_DTF'
+      pixi.color_mode = 'COLMODE_1COL0'
       pixi.low_threshold0 =  0
       pixi.high_threshold0 = 60
       pixi.sensor_config_build = 'PX8'
@@ -19,8 +19,8 @@ def initialSetupForPX8():
       pixi.trsf_mode = "UNMOD"
       pixi.hybrid_mode = 'CDTE'
       doit = false
-    except Exception, e:
-      str(e)
+    #except Exception, e:
+      #str(e)
       
 
 def memAndCpu():
@@ -47,6 +47,8 @@ def videoTest():
 
 
 #camera_interface.setHybridMode(camera.CDTE)
+
+initialSetupForPX8()
 
 
 
