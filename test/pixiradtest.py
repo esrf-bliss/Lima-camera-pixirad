@@ -51,14 +51,17 @@ def debugoff():
   db.setModuleFlagsNameList([])
   db.setTypeFlagsNameList([])
   
-
+debugtrace()
 
 print "\n\n\n\n ======= INIT ======== \n"
 
 
 #camera = PixiradAcq.Camera("172.24.8.135", 6666)
 camera = PixiradAcq.Camera("192.168.0.1", 2222)
-camera.init()
+
+camera.init()  ### Verifier INIT TODO
+
+time.sleep(3)
 
 #print "\n\n\n\n ======= RESET ======== \n"
 
@@ -71,16 +74,24 @@ print "\n\n\n\n ======= INTERFACE ======== \n"
 
 camera_interface = PixiradAcq.Interface(camera)
 
-
 camera_interface.setNbiMode(camera.SensorConfigNBI_OFF)
 camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeOFF)
 camera_interface.setRunConfigMode(camera.DATA)
 
 
 camera_interface.setHybridMode(camera.CDTE)
-camera_interface.setSensorConfigBuild(camera.PX8)
+#camera_interface.setSensorConfigBuild(camera.PX8)
+
+camera_interface.setSensorConfigBuild(camera.PX1)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
+
+
+
+camera.setHighThreshold0(25)
+camera.setLowThreshold0(8)
+
+
 
 
 
@@ -98,7 +109,7 @@ saving = control.saving()
 
 def newsave(newsaving, basename):
   pars=newsaving.getParameters()
-  pars.directory='/tmp/test_du_stagiaire'
+  pars.directory='/users/watier/test_du_stagiaire'
   pars.prefix=basename
   pars.suffix='.edf'
   pars.fileFormat=Core.CtSaving.EDF
@@ -204,8 +215,6 @@ def frange(x, y, jump):
 
 
 
-
-
     
 framerates_delai = []
 framerates_Coldtf_DtfON = []
@@ -277,6 +286,14 @@ def stability(fps, nbexpo, nbcycles):
 
 
 
+def accumulation(tempsExpoMax, tempsTotal, nbframes):
+  
+  acq.setAcqMode(Core.Accumulation)
+  acq.setAccMaxExpoTime(tempsExpoMax)
+  acq.setAcqExpoTime(tempsTotal); 
+  acq.setAcqNbFrames(nbframes)
+  control.prepareAcq(); 
+  control.startAcq()
 
 
 #def hvscan(duree):
@@ -302,17 +319,32 @@ def stability(fps, nbexpo, nbcycles):
       #time.sleep(0.2)
     
   
+scannumber = 0
   
+def energyscan():
+  global scannumber
+  scannumber =scannumber+1
+  #accumulation(0.1,5,1)
   
-def energyscan():  
+  acq.setAcqExpoTime(1); 
+  acq.setAcqNbFrames(1)
+
   for i in range(1,59):
     #time.sleep(10)
 
     print "\n\n\n\n ======= SETTERS  ======== \n"
 
     camera.setLowThreshold0(i)
-    camera.setHighThreshold0(i+1)
+    #camera.setHighThreshold0(i+1)
+    camera.setHighThreshold0(60)
 
+    camera.setLowThreshold1(i)
+    #camera.setHighThreshold0(i+1)
+    camera.setHighThreshold1(60)
+
+    #newsave(saving , str(scannumber)+"_rat_skull_energyScan_"+str(i)+"-"+str(i+1) )
+    newsave(saving ,  time.strftime('rat_skull_%Y_%m_%d-%H_%M_%S__')+str(i)+"-"+str(60) )
+    
     print "\n\n\n\n ======= PREPARE  ======== \n"
     control.prepareAcq()
     print "\n\n\n\n ======= START  ======== \n"

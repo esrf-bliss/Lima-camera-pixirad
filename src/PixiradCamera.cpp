@@ -519,6 +519,8 @@ void lima::Pixirad::Camera::getDetectorImageSize(Size& size) {
   if(build == PX8){
     DEB_TRACE() << "Pixel number is selected for a PX8" ;
     size = Size(476, 4096);  // TODO: CHANGE FOR PX8 REAL SIZE
+    
+    
   }
   
 }

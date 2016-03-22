@@ -302,6 +302,8 @@ public:
 // 	std::string temp_str = "Not initialised"; //  
 	char temp_str[1000];
 	
+	HwDetInfoCtrlObj* m_InterfaceHwDetInfoCtrlObjForAutoConfig;
+	
 	
 	
 	

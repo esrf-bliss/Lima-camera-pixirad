@@ -35,6 +35,8 @@ Interface::Interface(Camera& cam) : m_cam(cam), m_det_info(cam), m_sync(cam)
 	HwDetInfoCtrlObj *det_info = &m_det_info;
 	m_cap_list.push_back(det_info);
 
+	// To be used by final detector class for auto updating capabilities
+// 	cam.m_InterfaceHwDetInfoCtrlObjForAutoConfig = det_info;
 	
 	// Buffer Ctrl Object is made in pixiradDetector.cpp
 	// It is received and declarded in the capability list here.

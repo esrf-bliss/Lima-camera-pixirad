@@ -44,11 +44,18 @@ public:
      m_BufferCtrlObjReconstructionTask= (SoftBufferCtrlObj *)buffer_ctrl_obj;
   };
   
+  void setNbModules(int nbmodules){
+     DEB_MEMBER_FUNCT();
+    m_nbmodules = nbmodules;
+  }
+  
   virtual Data process(Data&);
   
 private:
 //   Camera::SdkFrameDim m_sdk_frame_dim;
   SoftBufferCtrlObj* m_BufferCtrlObjReconstructionTask;
+  int m_nbmodules;
+  
 };
 
 Data  _ReconstructionTask::process(Data& src)
@@ -56,6 +63,7 @@ Data  _ReconstructionTask::process(Data& src)
   DEB_MEMBER_FUNCT();
   
   StdBufferCbMgr &bufferReconstructionTask = m_BufferCtrlObjReconstructionTask->getBuffer();
+  
   
   int frame_number = src.frameNumber;
   
@@ -80,13 +88,23 @@ Data  _ReconstructionTask::process(Data& src)
      
      
      //TODO: Adapt for all models
-     int nbModules = 8;
+//      int nbModules = 1;
+//      if(m_cam.m_sensorConfigBuild == "PX8"){
+//       nbModules = 8;
+//       DEB_TRACE()<< "8 modules, more or less";
+//      }
+     int nbModules = m_nbmodules;   //TODO: change here
      int colsPerDout = 32;
      int douts = 16;
      int pixieRows = 476;
      int pixieCols = 512;
      int codeDepth = 15;
+     
+     
      int matrix_dim_words = pixieRows*pixieCols;
+     
+     
+     
      
      SENSOR Sens;
      Sens.Asic=PII;
@@ -94,14 +112,11 @@ Data  _ReconstructionTask::process(Data& src)
      Sens.rows  = pixieRows;
      Sens.matrix_size_pxls = matrix_dim_words;
      Sens.cols = pixieCols;
-     Sens.dout = douts;
-     
-     
-     
+     Sens.dout = douts;     
      Sens.conv_table.ptr=conversion_table_allocation(&Sens);
+     Sens.conv_table.depth = codeDepth;
      
      
-     Sens.conv_table.depth = 15;
      
      //ushort temporaryBufferLocal[8*476*512*15]; // TODO: change for one module. // This is local_buffer_ptr
      unsigned short *temporaryBufferLocal;
@@ -189,7 +204,7 @@ void ReconstructionCtrlObj::prepareAcq()
   DEB_MEMBER_FUNCT();
   
   m_task->setBuffer(m_cam.m_pixirad->m_reconstructionBufferCtrlObj);
-  
+  m_task->setNbModules(m_cam.m_pixirad->m_nbModules);
 }
 
 //-----------------------------------------------------

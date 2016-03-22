@@ -64,7 +64,6 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
   // TODO: COntinue testing regexp on this thread :
   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
-  
 //   setStatusDetector(HwInterface::StatusType::Ready);
   
   
@@ -112,6 +111,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
   bind(localSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
   
   
+  
     
       DEB_TRACE() << "Weather monitor communication ready." << DEB_VAR1(m_weatherUdpPort);
       
@@ -120,12 +120,15 @@ void pixiradDetector::boxHumidityTempMonitor(){
       
       while (1){
 	bytes_recvd=0;
-	bytes_recvd = recvfrom(localSocket, (char*)weather, 291,  0, NULL, 0);
-	 	//DEB_TRACE() << "Weather thread: "<<DEB_VAR2(bytes_recvd, weather);
+	bytes_recvd = recvfrom(localSocket, (char*)weather, 1024,  0, NULL, 0);
+// 	 	DEB_TRACE() << "Weather thread: "<<DEB_VAR2(bytes_recvd, weather);
 	
 	
-	// Here we find the interresting values within the udp "weather" stream of the detector. 
+	// Here we find the interesting values within the udp "weather" stream of the detector. 
 	// Thing changed between pixirad1 and 8 so, for some, there is two regexp slightly different.
+	
+	// Note for debug: if there is no update of the values, check that the binding is not already in use, like for example another instance of this detector running.
+	
 	
 	regex_t regex;  // pixi8 or all
 	regex_t regexpixi1style; // pixi1 only
@@ -134,16 +137,16 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	if (bytes_recvd > 0){
 	
-	  
+// 	  DEB_TRACE()<<weather;
 	  
 // 	READ_TCOLD_DONE 22.80 �C
 	regcomp(&regex, "READ_TCOLD_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	regcomp(&regexpixi1style, "READ_TCOLD_DONE ([-0123456789.]+)",  REG_EXTENDED);
+	regcomp(&regexpixi1style, "READ_TCOLD ([-0123456789.]+)",  REG_EXTENDED);
 	
 	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierCold) 
 	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierCold) 
 	){		
- 	  DEB_TRACE() << "Cold side of the peltier : "<<DEB_VAR1(m_temperaturePeltierCold);
+//  	  DEB_TRACE() << "Cold side of the peltier : "<<DEB_VAR1(m_temperaturePeltierCold);
  	}
  	else DEB_TRACE() << "NO PELTIER COLD INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -152,12 +155,12 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	// // 	READ_THOT_DONE 15.95 �C
 	regcomp(&regex, "READ_THOT_DONE ([-0123456789.]+)",  REG_EXTENDED);
-	regcomp(&regexpixi1style, "READ_THOT_DONE ([-0123456789.]+)",  REG_EXTENDED);
+	regcomp(&regexpixi1style, "READ_THOT ([-0123456789.]+)",  REG_EXTENDED);
 	
 	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierHot) 
 	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierHot) 
 	){		
-	  DEB_TRACE() << "Hot side of the peltier : "<<DEB_VAR1(m_temperaturePeltierHot);
+// 	  DEB_TRACE() << "Hot side of the peltier : "<<DEB_VAR1(m_temperaturePeltierHot);
 	}
 	else DEB_TRACE() << "NO PELTIER HOT INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -171,7 +174,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_HighVoltageTension) 
 	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_HighVoltageTension) 
 	){	
-	  DEB_TRACE() << "HV tension : "<<DEB_VAR1(m_HighVoltageTension);
+// 	  DEB_TRACE() << "HV tension : "<<DEB_VAR1(m_HighVoltageTension);
 	}
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -183,7 +186,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxHumidity) 
 	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxHumidity) 
 	){		
-	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
+// 	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
 	}
 	else DEB_TRACE() << "NO HUMIDITY INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -195,7 +198,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxTemperature) 
 	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxTemperature) 
 	){	
-	  DEB_TRACE() << "Box temperature : "<<DEB_VAR1(m_boxTemperature);
+// 	  DEB_TRACE() << "Box temperature : "<<DEB_VAR1(m_boxTemperature);
 	}
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -205,7 +208,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	regcomp(&regex, "READ_PELTIER_PWR ([-0123456789.]+)",  REG_EXTENDED);
 	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_peltierPower)){	
-	  DEB_TRACE() << "Peltier Power : "<<DEB_VAR1(m_peltierPower);
+// 	  DEB_TRACE() << "Peltier Power : "<<DEB_VAR1(m_peltierPower);
 	}
 	else DEB_TRACE() << "NO PELTIER POWER INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
@@ -280,24 +283,58 @@ void pixiradDetector::boxHumidityTempMonitor(){
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}
 	
+	// There is no alarm feedback for the PX1. Humidity is nice too know.
+	if(m_sensorConfigBuild == "PX1" and m_boxHumidity >= 2){
+	  // Forcing alarm if humidity more than 2%
+	  m_alarmHumidity = true;	  
+	}
+	
+	if(m_sensorConfigBuild == "PX1" and m_boxHumidity < 2){
+	  // Forcing alarm if humidity more than 2%
+	  m_alarmHumidity = false;	  
+	}
+	
+	if(m_sensorConfigBuild == "PX1" and m_boxTemperature >= 30){
+	  // Forcing alarm if humidity more than 2%
+	  m_alarmTempTooHot = true;	 
+	}
+	
+	if(m_sensorConfigBuild == "PX1" and m_boxTemperature <= 8){
+	  // Forcing alarm if humidity more than 2%
+	  m_alarmTempTooCold = true;	  
+	}
+	
+	if(m_sensorConfigBuild == "PX1" and m_boxTemperature > 8 and m_boxTemperature < 30){
+	  // Forcing alarm if humidity more than 2%
+	  m_alarmTempTooCold = false;	  
+	  m_alarmTempTooHot = false;	  
+	}
+	
 	
 	
 	
 	regcomp(&regex, ".*PIXIRAD-8 SN 8000.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
-	  m_sensorConfigAsic = "PII";
-	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
-	  m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
-	  
- 	  DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
+	  if (m_sensorConfigBuild != "PX8"){
+	    m_sensorConfigAsic = "PII";
+	    m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
+	    m_UdpPortImages = 9999;
+	    
+	    m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
+	    
+	    DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
+	  }
 	}
 	regcomp(&regex, ".*BOX_SERIAL 1018.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
-	  m_sensorConfigAsic = "PII";
-	  m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
-	  m_sensorConfigBuild = "PX1"; // PX1 PX2 PX8
-	  
- 	  DEB_TRACE() << "A pixirad 1 model has been detected  - AUTOCONFIGURATION based on UDP stream";	  
+	  if (m_sensorConfigBuild != "PX1"){
+	    m_sensorConfigAsic = "PII";
+	    m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
+	    m_sensorConfigBuild = "PX1"; // PX1 PX2 PX8	  
+	    m_UdpPortImages = 2223;
+	    m_nbModules = 1;
+	    DEB_TRACE() << "A pixirad 1 model has been detected  - AUTOCONFIGURATION based on UDP stream";	  
+	  }
 	}
 	
 	
@@ -369,13 +406,24 @@ void pixiradDetector::prepareAcq()
   // This may have changed due to acquisition option, so lets have it at each new set of images request.
   
   Size mySize;
-  if(m_sensorConfigBuild.compare("PX1") == 0){ mySize = Size(476, 512);}
+  if(m_sensorConfigBuild.compare("PX1") == 0){ 
+    mySize = Size(476, 512);
+    m_nbModules = 1;
+    m_UdpPortImages = 2223;
+  }
   
   if(m_sensorConfigBuild.compare("PX8") == 0){
     if(m_oneChipModeOutOfEight != -1 ){
       mySize = Size(476, 512);
+      m_nbModules = 1;
     }
-    else mySize = Size(476, 4096);
+    else {
+      mySize = Size(476, 4096);
+      m_nbModules = 8;
+    }
+  
+    
+    m_UdpPortImages = 9999;
   }
   
   FrameDim      myFrameDim;  
@@ -389,10 +437,6 @@ void pixiradDetector::prepareAcq()
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
   
-
-  
-  
- 
 
 }
 
@@ -434,6 +478,12 @@ void pixiradDetector::getImages()
   DEB_TRACE() << "UDP Socket Creation";
   struct sockaddr_in sockaddrInUDP;
   int socketUDPImage;
+  
+  
+  
+  //////////////////  Receiving //////////////
+  if(m_sensorConfigBuild == "PX8" ){ m_UdpPortImages = 9999; }  
+  else { m_UdpPortImages = 2223; }
   
   
   memset((unsigned char *) &sockaddrInUDP, 0, sizeof(sockaddrInUDP));
@@ -485,10 +535,12 @@ void pixiradDetector::getImages()
   
   //////////////////  Receiving //////////////
   if(m_sensorConfigBuild == "PX8" and m_readOutSchema == "DEFAULT"){
-    m_numberOfUDPPacketsPerImage = PII_PX8_DEFAULT_NPACK;
+    m_numberOfUDPPacketsPerImage = 2539;
+//     m_numberOfUDPPacketsPerImage = PII_PX8_DEFAULT_NPACK;
   }  
   else {
-    m_numberOfUDPPacketsPerImage = PII_PX1_DEFAULT_NPACK;
+//     m_numberOfUDPPacketsPerImage = PII_PX1_DEFAULT_NPACK;
+    m_numberOfUDPPacketsPerImage = 360;
   }
   
   
@@ -516,7 +568,7 @@ void pixiradDetector::getImages()
   m_stopAcquisition = false;
   
   
-  DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR1((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq) ;
+  DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_UdpPortImages ) ;
   for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
     if(not m_stopAcquisition){
     
@@ -636,9 +688,9 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   int resultConnection2 = 0;
   struct sockaddr_in serv_addr;
   
-  DEB_TRACE() << "Attempting to create a AF_INET, SOCK_STREAM TCP socket for command sending ";
+//   DEB_TRACE() << "Attempting to create a AF_INET, SOCK_STREAM TCP socket for command sending ";
   if ((m_socketToPixiradServer = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    DEB_TRACE() << "Error : Could not create a socket ";
+     DEB_ERROR() << "Error : Could not create a socket ";
   }
   
   memset(&serv_addr, '0', sizeof (serv_addr));
@@ -647,37 +699,37 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   serv_addr.sin_port = htons(m_TcpPort);
   
   
-  DEB_TRACE() << "socket inet_pton ";
+//   DEB_TRACE() << "socket inet_pton ";
   if (inet_pton(AF_INET, m_ipAdressDetector.c_str(), &serv_addr.sin_addr) <= 0) {
-    DEB_TRACE() << "inet_pton error occured";   
+    DEB_ERROR() << "inet_pton error occured";   
     close(m_socketToPixiradServer); 
     return -1;
   }
   
-  DEB_TRACE() << "Socket Connection" ;
+//   DEB_TRACE() << "Socket Connection" ;
   if (connect(m_socketToPixiradServer, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) < 0) {
-    DEB_TRACE() << "Error : Connect Failed ";
+    DEB_ERROR() << "Error : Connect Failed ";
     close(m_socketToPixiradServer);
     return -2;
   }
   else {  
     
       
-      DEB_WARNING() << "TX --- Sending : " << DEB_VAR1(command);
+//       DEB_TRACE() << "TX --- Sending : " << DEB_VAR1(command);
       uint32_t sizeOfCommand = command.length();
       
       // Then the message itself.
       resultConnection = write(m_socketToPixiradServer, command.c_str(), sizeOfCommand); 
       
       
-      DEB_TRACE() << "TX --- Sent successfully the command: " << DEB_VAR1(resultConnection);
+//       DEB_TRACE() << "TX --- Sent successfully the command: " << DEB_VAR1(resultConnection);
       
       resultConnection2 = write(m_socketToPixiradServer, "\n", 2); 
       
-      DEB_TRACE() << "TX --- Sent successfully the cariage return: " << DEB_VAR1(resultConnection2);
+//       DEB_TRACE() << "TX --- Sent successfully the cariage return: " << DEB_VAR1(resultConnection2);
       
       if (resultConnection < 0 or resultConnection2 < 0) {
-	DEB_TRACE() << "TX --- ERROR writing to socket";
+// 	DEB_TRACE() << "TX --- ERROR writing to socket";
 	close(m_socketToPixiradServer);
 	return -3;
       }
@@ -685,7 +737,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
       // Now we listen the answer from the detector
       if(waitanswer){
       
-	DEB_TRACE() << "RX TCP --- Waiting for answer from the detector " ;
+// 	DEB_TRACE() << "RX TCP --- Waiting for answer from the detector " ;
 	
 	int bytes_recvd=0;
 	int index=0;
@@ -694,7 +746,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
 	  index+=bytes_recvd;
 	}
 	while(commandAnswerFromDetector[index]!='\n' && bytes_recvd!=SOCKET_ERROR && bytes_recvd!=0 && index<MAX_MSG_STR_LENGTH);
-	DEB_WARNING() << "RX  TCP --- Got an answer from the detector: "<<DEB_VAR1(commandAnswerFromDetector) ;
+// 	DEB_TRACE() << "RX  TCP --- Got an answer from the detector: "<<DEB_VAR1(commandAnswerFromDetector) ;
       }
     }
   
@@ -852,9 +904,12 @@ void pixiradDetector::stopAcq(){
   m_stopAcquisition = true;  // should get out of the acquisition loop
   m_allImagesReceived = true;
   if(m_imageThread.joinable()){
-    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
+    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE ... " << DEB_VAR1(m_imageThread.get_id());
     m_imageThread.detach();
-    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThread.get_id());
+    DEB_TRACE() << "Well, was alive, I mean.  Now detached, a thread beheading of a sort." << DEB_VAR1(m_imageThread.get_id());
+  }
+  else {
+    DEB_TRACE() << "No previous image thread pending. No problem then.";
   }
   
   

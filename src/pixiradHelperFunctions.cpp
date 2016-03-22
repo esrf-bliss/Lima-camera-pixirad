@@ -132,7 +132,7 @@ double fractions[]=
     success = true;
   }
   else if (reti == REG_NOMATCH) {
-    puts("No match");
+//     puts("No match");
   }
   else {
     regerror(reti, &regex, msgbuf, sizeof(msgbuf));

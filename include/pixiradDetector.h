@@ -177,9 +177,9 @@ public:
   int m_nCyclesUdpDelay = 0;
 
   float m_sensorConfigHighThreshold1 = 60;
-  float m_sensorConfigLowThreshold1 = 15;
-  float m_sensorConfigHighThreshold0 = 15;
-  float m_sensorConfigLowThreshold0 = 1;
+  float m_sensorConfigLowThreshold1 = 8;
+  float m_sensorConfigHighThreshold0 = 60;
+  float m_sensorConfigLowThreshold0 = 8;
   
   int  m_sensorConfigHighThreshold1DAC = 0;
   int m_sensorConfigLowThreshold1DAC = 0;
@@ -190,7 +190,7 @@ public:
   int m_sensorConfigRefInternalBiais = 1;
   int m_sensorConfigAusFSInternalBiais = 7;
   // Dead time free mode or not 
-  std::string m_sensorConfigDeadTimeFreeMode = "DTF"; // DTF or NODTF
+  std::string m_sensorConfigDeadTimeFreeMode = "NODTF"; // DTF or NODTF
   std::string m_sensorConfigNBI = "NONBI"; // NBI or NONBI
   
   
@@ -201,6 +201,7 @@ public:
   std::string m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
   std::string m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
   
+  int m_nbModules = 8;
   
   // Run config (maybe later ?)
   //! Run_Config RunMode FilenameA FilenameB Parameters
@@ -233,7 +234,7 @@ public:
   int m_nbFramesAlreadyAcq = 0; //    Frames(N) Number of frames to acquire;
   int m_shutterMs = 1; //    Shutt_ms(R) Shutter width(ms);
   int m_pauseBetweenAcq = 0; //    Pause_ms(R) Pause in ms;
-  std::string m_RunModeColors = "DTF"; //    RunMode(S) Selects the detector run mode : “2COL” Two colors;//    “1COL0” One color reg0;//    “1COL1” One color reg1;//    “DTF” One Color in Dead Time Free;//    “4COL” Four colors;
+  std::string m_RunModeColors = "1COL0"; //    RunMode(S) Selects the detector run mode : “2COL” Two colors;//    “1COL0” One color reg0;//    “1COL1” One color reg1;//    “DTF” One Color in Dead Time Free;//    “4COL” Four colors;
   std::string m_TriggerMode = "INT"; //    TrgMode(S) Selects the trigger configuration : “INT” (default) Internal trigger. Acquisition starts when the LOOP command is received by the box and Frames acquisition is internally triggered;
   //    “EXT1” External trigger fixed shutter width, a positive edge at “SyncIn” triggers the frame acquisition. Shutter duration is internally managed;
   std::string m_HvMode = "NULL"; //    HVMode(S) HV management Mode : - Please Set to "NULL" this parameter
@@ -467,13 +468,13 @@ public:
   void stopAcq();
   
   
+  int m_UdpPortImages = 9999; // 2223 for PX1
   
 private:
   std::string m_ipAdressDetector = "192.168.0.1";
   int m_TcpPort = 2222;
   int m_weatherUdpPort = 2224;
   int m_UdpPort = 4444;
-  int m_UdpPortImages = 9999;
   
   std::thread m_imageThread;
   std::thread m_boxHumidityTempMonitor;
