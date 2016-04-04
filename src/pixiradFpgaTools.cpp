@@ -19,13 +19,12 @@ using namespace lima::Pixirad;
 
 
 
+// Theses functions came from the pixirad team for decoding the raw 15b images from the fpga to 16bits unsigned  images.
+
+
 
 
 void lima::Pixirad::my_bytes_swap (unsigned short* us_ptr){
-  
-//   DEB_MEMBER_FUNCT();
-  //DEB_TRACE() << "My Bytes Swap ";
-  
   
   char a,b,*temp_char_ptr;
   temp_char_ptr=(char*)us_ptr;
@@ -41,6 +40,9 @@ void lima::Pixirad::my_bytes_swap (unsigned short* us_ptr){
 
 int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* source_memory_offset,
 				 unsigned short* destination_memory_offset,SENSOR Sens,int verbose){
+//    DEB_STATIC_FUNCT();
+//    DEB_TRACE()<<"convert_bit_stream_to_counts "<<DEB_VAR4(code_depth, source_memory_offset, destination_memory_offset, Sens);
+  
   int i,j;
   unsigned short dout_masks[Sens.dout],counter_masks[code_depth]
   ,dout_mask_seed,cnt_mask_seed;
@@ -270,11 +272,15 @@ unsigned short * lima::Pixirad::conversion_table_allocation(SENSOR* Sens_ptr){
   if((*Sens_ptr).Asic==PII){
     (*Sens_ptr).conv_table.depth=PSTABLE_DEPTH;
     ush_ptr=(unsigned short*)calloc(PSTABLE_DEPTH, sizeof(unsigned short));
+    
+    
+     memset(ush_ptr, 0, PSTABLE_DEPTH*sizeof(unsigned short));
+    
     (*Sens_ptr).conv_table.ptr=ush_ptr;
 	genera_tabella_clock(ush_ptr,PSTABLE_DEPTH,PSCNT_WIDTH);
 	return(ush_ptr);
   }
-  return(NULL);// PIII NOT SUPPORTED NOW
+  else return(NULL);// PIII NOT SUPPORTED NOW
   
   
     

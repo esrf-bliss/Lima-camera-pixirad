@@ -46,6 +46,14 @@
 
 #include "lima/RegExUtils.h" // Regex LimaStyle
 
+
+// to be removed:
+#include <fstream>
+
+
+
+
+
 using namespace std;
 using namespace lima;
 using namespace lima::Pixirad;
@@ -58,6 +66,7 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
   DEB_TRACE() << "Starting threads for socket handling";
   DEB_TRACE() << "TCP Server for the pixirad is " << DEB_VAR2(ipAdressDetector, TcpPort);
   
+  
   setStatusDetector(HwInterface::StatusType::Config);
   
   
@@ -65,10 +74,7 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
 //   setStatusDetector(HwInterface::StatusType::Ready);
-  
-  
-  
-  
+    
 }
 
 
@@ -117,6 +123,10 @@ void pixiradDetector::boxHumidityTempMonitor(){
       
       int bytes_recvd=0;
       char weather[1024];
+	
+      regex_t regex;  // pixi8 or all
+      regex_t regexpixi1style; // pixi1 only
+	
       
       while (1){
 	bytes_recvd=0;
@@ -128,10 +138,6 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// Thing changed between pixirad1 and 8 so, for some, there is two regexp slightly different.
 	
 	// Note for debug: if there is no update of the values, check that the binding is not already in use, like for example another instance of this detector running.
-	
-	
-	regex_t regex;  // pixi8 or all
-	regex_t regexpixi1style; // pixi1 only
 	
 	
 	
@@ -151,6 +157,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
  	else DEB_TRACE() << "NO PELTIER COLD INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
 	
+	regfree(&regex);
+	regfree(&regexpixi1style);
 	
 	
 	// // 	READ_THOT_DONE 15.95 �C
@@ -165,6 +173,9 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	else DEB_TRACE() << "NO PELTIER HOT INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
 	
+	regfree(&regex);
+	regfree(&regexpixi1style);
+	
 	
 	
 	// 	READ_HV_DONE 0.14 V
@@ -178,6 +189,9 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	}
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
+	regfree(&regex);
+	regfree(&regexpixi1style);
+	
 	
 	
 	// 	READ_BOX_RH 27.25 %
@@ -189,6 +203,9 @@ void pixiradDetector::boxHumidityTempMonitor(){
 // 	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
 	}
 	else DEB_TRACE() << "NO HUMIDITY INFO IN WEATHER STREAM " << DEB_VAR1(weather);
+	
+	regfree(&regex);
+	regfree(&regexpixi1style);
 	
 	
 // 	READ_BOX_TEMP_DONE 19.70 �C  Pixirad 8
@@ -203,6 +220,9 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	else DEB_TRACE() << "NO HIGH VOLTAGE INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
 	
+	regfree(&regex);
+	regfree(&regexpixi1style);
+	
 	
 // 	READ_PELTIER_PWR 0.00 %
 	
@@ -212,6 +232,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	}
 	else DEB_TRACE() << "NO PELTIER POWER INFO IN WEATHER STREAM " << DEB_VAR1(weather);
 	
+	regfree(&regex);
 	
 	// Alarms can be disabled, off, or on.
 	// Good practice is to check if enabled before looking for an alarm status.
@@ -224,18 +245,21 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_alarmTempTooHotEnabled = true;	  
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
 	}	
+	regfree(&regex);
 	regcomp(&regex, ".*THOT_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  m_alarmTempTooHot = true;
 	  m_alarmTempTooHotEnabled = true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
 	}
+	regfree(&regex);
 	regcomp(&regex, ".*THOT_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  m_alarmTempTooHot = false;
 	  m_alarmTempTooHotEnabled = false;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
 	}
+	regfree(&regex);
 	
 	
 	
@@ -246,12 +270,17 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_alarmTempTooColdEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
 	}	
+	regfree(&regex);
+	
+	
 	regcomp(&regex, ".*TCOLD_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  m_alarmTempTooCold = true;
 	  m_alarmTempTooColdEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
-	}
+	}	
+	regfree(&regex);
+	
 	
 	regcomp(&regex, ".*TCOLD_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
@@ -259,6 +288,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_alarmTempTooColdEnabled= false;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
 	}
+	regfree(&regex);
 	
 	
 	
@@ -269,12 +299,17 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_alarmHumidityEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}	
+	
+	regfree(&regex);
+	
+	
 	regcomp(&regex, ".*HUMIDITY_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  m_alarmHumidity = true;
 	  m_alarmHumidityEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}
+	regfree(&regex);
 	
 	regcomp(&regex, ".*HUMIDITY_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
@@ -282,6 +317,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	  m_alarmHumidityEnabled= false;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}
+	regfree(&regex);
 	
 	// There is no alarm feedback for the PX1. Humidity is nice too know.
 	if(m_sensorConfigBuild == "PX1" and m_boxHumidity >= 2){
@@ -324,7 +360,9 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	    
 	    DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
 	  }
-	}
+	}	
+	regfree(&regex);
+	
 	regcomp(&regex, ".*BOX_SERIAL 1018.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  if (m_sensorConfigBuild != "PX1"){
@@ -336,9 +374,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	    DEB_TRACE() << "A pixirad 1 model has been detected  - AUTOCONFIGURATION based on UDP stream";	  
 	  }
 	}
-	
-	
-	
+	regfree(&regex);
 	
 	
 	}
@@ -402,23 +438,21 @@ void pixiradDetector::getImagesInAThread()
 
 void pixiradDetector::prepareAcq()
 {
+  DEB_MEMBER_FUNCT();
+  
   // Prepare new buffer for reconstruction tasks
   // This may have changed due to acquisition option, so lets have it at each new set of images request.
   
-  Size mySize;
   if(m_sensorConfigBuild.compare("PX1") == 0){ 
-    mySize = Size(476, 512);
     m_nbModules = 1;
     m_UdpPortImages = 2223;
   }
   
   if(m_sensorConfigBuild.compare("PX8") == 0){
     if(m_oneChipModeOutOfEight != -1 ){
-      mySize = Size(476, 512);
       m_nbModules = 1;
     }
     else {
-      mySize = Size(476, 4096);
       m_nbModules = 8;
     }
   
@@ -428,8 +462,26 @@ void pixiradDetector::prepareAcq()
   
   FrameDim      myFrameDim;  
   myFrameDim.setImageType(Bpp16);  
+  
+  Size mySize;
+  
+    DEB_TRACE() << "Size declaration :" << DEB_VAR1(mySize);
+  
+  mySize = Size(476, 512);
+  
+    DEB_TRACE() << "Size default :" << DEB_VAR1(mySize);
+  
+  getSize(mySize);
+  
+  
+    DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
+  
+    
+    
+    DEB_TRACE() << "frame initialise  :" << DEB_VAR1(mySize);
   myFrameDim.setSize(mySize);
   
+    DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
   
   
   // temporary buffer when the reconstruction task is active for decoding and destriding
@@ -437,8 +489,35 @@ void pixiradDetector::prepareAcq()
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
   
+  
 
 }
+
+void pixiradDetector::getSize(Size &size){
+
+  DEB_MEMBER_FUNCT();
+  
+  if(m_sensorConfigBuild.compare("PX1") == 0){ 
+      size = Size(476, 512);  // what it should be
+//     size = Size(512, 476);
+
+  }
+  
+  if(m_sensorConfigBuild.compare("PX8") == 0){
+    if(m_oneChipModeOutOfEight != -1 ){
+      size = Size(476, 512);
+    }
+    else {
+      size = Size(476, 4096);
+    }
+  
+  }
+  
+    DEB_TRACE() << "Size has been configured by detector class as :" << DEB_VAR1(size);
+  
+  
+}
+
 
 
 
@@ -520,7 +599,7 @@ void pixiradDetector::getImages()
   DEB_TRACE() << "Modification of socket SO_RCVBUF size. Initial socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
   
   
-  socklen_t czm = sizeof(int);
+//   socklen_t czm = sizeof(int);
   
   if (setsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &MAXSIZEFORSOCKETBUFFER, sockOptSize) == -1) {
     DEB_ERROR() << "UDP Socket buffer size SO_RCVBUF increase failed, change /etc/sysctl.conf if you experience problems.";
@@ -531,7 +610,7 @@ void pixiradDetector::getImages()
   
   
   
-  
+  /*
   
   //////////////////  Receiving //////////////
   if(m_sensorConfigBuild == "PX8" and m_readOutSchema == "DEFAULT"){
@@ -542,7 +621,7 @@ void pixiradDetector::getImages()
 //     m_numberOfUDPPacketsPerImage = PII_PX1_DEFAULT_NPACK;
     m_numberOfUDPPacketsPerImage = 360;
   }
-  
+  */
   
   
   unsigned short acknowledgator[m_nbFramesAcq];
@@ -568,6 +647,37 @@ void pixiradDetector::getImages()
   m_stopAcquisition = false;
   
   
+  // /////// The asic send more pixels than needed.  /////    
+  // For PX1 :       
+  // For the PX1 we will receive 360 * 1440 (useful) bytes
+  // The data is 15 * 476 * 512
+  // Therefore the 15 * 476 * 512 / 1440.0 / 8 =  317.3333333333333 , the foloowing 42 UDP datagrams needs not to be saved       
+  // packetid larger than 318 are to be discarded
+  // packetid 317 will have to be truncated to the first 480 bytes
+  // ( 476*512*15 - 317*1440*8 )  /8  = 480
+  
+  // For PX8 :       
+  // For the PX8 we will receive 2539 * 1440 (useful) bytes
+  // The data  is 15 * 476 * 512 *8 =  29245440 bits
+  // Therefore the 476*512*15*8/1440.0/8 = 2538.6666666666665 , 
+  // the last datagram (packetid==2539) have to be truncated to the first 960 bytes
+  //(476*512*15 *8 - 2538*1440*8)/8 = 960  
+
+  int lastDatagramToKeep = 0;
+  int amountOfTheLastDatagramToKeep = 0;
+  if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
+    lastDatagramToKeep = 2539;
+    amountOfTheLastDatagramToKeep= 960;
+    m_numberOfUDPPacketsPerImage = 2539; 
+  }
+  else{
+    lastDatagramToKeep = 317;
+    amountOfTheLastDatagramToKeep= 480;   
+    m_numberOfUDPPacketsPerImage = 360; 
+  }
+  
+  
+  
   DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_UdpPortImages ) ;
   for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
     if(not m_stopAcquisition){
@@ -575,10 +685,14 @@ void pixiradDetector::getImages()
       int realpacketsize = recvfrom(socketUDPImage, (char*)buf, MAX_PACK_LEN,  0, NULL, 0);
 //    recvfrom(socketUDPImage, (char*)buf, 4,  0, NULL, 0);
      
+      if (realpacketsize != 1448){DEB_ERROR() << "A packet has an unexpected size, you should be worried about it." <<DEB_VAR1(realpacketsize);}
+      if(realpacketsize == -1){DEB_ERROR() << "UDP error, some datagrams has been lost in the wild world of copper cables."<<DEB_VAR1(packet);} 
+      else{
+	
       packetTag=*buf;
       
       //TODO: Autocal
-      if(packetTag & AUTOCAL_DATA){DEB_TRACE() << "AUTOCAL - Someone should do something about it.";}
+      if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
       
       // SlotId is the image frame number in pixirad manual
       // packet id is the part of the image that is in the received udp datagram
@@ -590,72 +704,92 @@ void pixiradDetector::getImages()
       packet_id_18=packet_id_1<<8;
       packet_id = packet_id_18 + packet_id_2;
       
-      
-      bool iDontKnowMyPlace = true;
-      bool fireLima = false;
-      
-      while (iDontKnowMyPlace) {
+      if (packet_id <= lastDatagramToKeep){
 	
-	if(acknowledgator[slotId] <= m_numberOfUDPPacketsPerImage - 2){
-	  // first round 
-	  // fill image here
-	  iDontKnowMyPlace = false; 
-	  //printf("image %i packet %i \n", slotId, packet_id);	
+	bool iDontKnowMyPlace = true;
+	bool fireLima = false;
+	
+	while (iDontKnowMyPlace) {
 	  
-//  	  DEB_TRACE() << "recv -2: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
+	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
+	    // first round 
+	    // fill image here
+	    iDontKnowMyPlace = false; 
+	    //printf("image %i packet %i \n", slotId, packet_id);	
+	    
+//     	  DEB_TRACE() << "recv -2: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
+	    
+	    acknowledgator[slotId] = acknowledgator[slotId] +1;
+	    
+	  }
+	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+	    
+	    // fire lima !	
+//     	  DEB_TRACE() << "recv -1: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
+	    DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
+	    
+	    acknowledgator[slotId] = acknowledgator[slotId] +1;
+	    iDontKnowMyPlace = false; 
+	    fireLima = true;
+	  }
+	  if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
+	    slotId = slotId + 256;
+	    iDontKnowMyPlace = true; // Still true, could be more than 512
+	  }
+	}
+	
+	
+	void *voidimageptr =reconstructionBufferMgr.getFrameBufferPtr(slotId);
+	
+	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
+	
+	// image =16b  =>/2
+  //       int positionOfDatagramInImage8b =  packet_id * 1440; //
+	int positionOfDatagramInImage8b =  packet_id * 1440; // 
+	
+	
+	
+	
+  //       DEB_TRACE()<<"MEMCOPY BEFORE >> "<<DEB_VAR4(image8b[positionOfDatagramInImage8b],positionOfDatagramInImage8b,buf[4], realpacketsize);
+	//       memcpy(&image8b[positionOfDatagramInImage8b], &buf[4], realpacketsize-8);
+	
+	if (packet_id == lastDatagramToKeep){
+	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
+	}
+	else {
+	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
+	}
+  //       DEB_TRACE()<<"MEMCOPY AFTER <<"<<DEB_VAR4(image8b[positionOfDatagramInImage8b],positionOfDatagramInImage8b,buf[4], realpacketsize);
+	
+	// TODO: do something for tha last datagram, which will have only a part of the buffer related to the image.
+  
+	
+	if(fireLima)
+	{   
+	  // Build a frame info for Lima.
+	  HwFrameInfoType frame_info;
+	  frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
 	  
-	  acknowledgator[slotId] = acknowledgator[slotId] +1;
+	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
+	  
+	  bool result = finalBufferMgr.newFrameReady(frame_info); 
+	  
+	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(result,  m_numberOfUDPPacketsPerImage*m_nbFramesAcq, packet, frame_info);
+	  
+	  fireLima = false;
+	  
+		// To be removed :
+	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
+	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
+	  b_stream4.write(sourceAsChar4, 512*476*1*2);
+	  b_stream4.close();
+     
 	  
 	}
-	else if(acknowledgator[slotId] == m_numberOfUDPPacketsPerImage - 1 ){
-	  
-	  // fire lima !	
-//  	  DEB_TRACE() << "recv -1: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
-	  DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
-	  
-	  acknowledgator[slotId] = acknowledgator[slotId] +1;
-	  iDontKnowMyPlace = false; 
-	  fireLima = true;
-	}
-	if( (not fireLima) and acknowledgator[slotId] >= m_numberOfUDPPacketsPerImage){
-	  slotId = slotId + 256;
-	  iDontKnowMyPlace = true; // Still true, could be more than 512
-	}
-      }
-      
-      
-      void *voidimageptr =reconstructionBufferMgr.getFrameBufferPtr(slotId);
-      
-      uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
-      
-      // image =16b  =>/2
-      int positionOfDatagramInImage8b =  packet_id * 1440;
-      
-      
-      //       memcpy(&image8b[positionOfDatagramInImage8b], &buf[4], realpacketsize-8);
-      memcpy(&image8b[positionOfDatagramInImage8b], &buf[4], 1440);
-      
-      
-      // TODO: do something for tha last datagram, which will have only a part of the buffer related to the image.
- 
-      
-      if(fireLima)
-      {   
-	// Build a frame info for Lima.
-	HwFrameInfoType frame_info;
-	frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
-	
-	DEB_TRACE() << DEB_VAR2(frame_info, slotId);
-	
- 	bool result = finalBufferMgr.newFrameReady(frame_info); 
-	
-	DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(result,  m_numberOfUDPPacketsPerImage*m_nbFramesAcq, packet, frame_info);
-	
-	fireLima = false;
-      }
+      }// discard too much datagrams
       
     } // if not stop acquisition
-      
+    }
   }
 
 //   free(acknowledgator);
@@ -678,6 +812,10 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   DEB_MEMBER_FUNCT();
   
 //   pthread_mutex_lock(&m_mutex);
+  
+  // flushing answer buffer
+  for(int i = 0 ; i<MAX_MSG_STR_LENGTH; i++){commandAnswerFromDetector[i]='\0';}
+  
   
   std::unique_lock<std::mutex> uniqLock(m_mutexCommandTCP);
   
@@ -715,7 +853,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   else {  
     
       
-//       DEB_TRACE() << "TX --- Sending : " << DEB_VAR1(command);
+       DEB_TRACE() << "TX --- Sending : " << DEB_VAR1(command);
       uint32_t sizeOfCommand = command.length();
       
       // Then the message itself.
@@ -746,7 +884,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
 	  index+=bytes_recvd;
 	}
 	while(commandAnswerFromDetector[index]!='\n' && bytes_recvd!=SOCKET_ERROR && bytes_recvd!=0 && index<MAX_MSG_STR_LENGTH);
-// 	DEB_TRACE() << "RX  TCP --- Got an answer from the detector: "<<DEB_VAR1(commandAnswerFromDetector) ;
+ 	DEB_TRACE() << "RX  TCP --- detector answer: "<<DEB_VAR1(commandAnswerFromDetector) ;
       }
     }
   
@@ -834,28 +972,36 @@ void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status)
   
   regcomp(&regex, ".*ACQ STATUS: IDLE" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Ready;}
+  regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: STARTED" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Exposure;}
+  regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: RUNNING" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Exposure;}
+  regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: DONE" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Ready;}
+  regfree(&regex);
   
   // BROKEN Means that is has been stopped. so detector is ready.
   regcomp(&regex, ".*ACQ STATUS: BROKEN" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Ready;}
+  regfree(&regex);
   
-  regcomp(&regex, ".*ACQ STATUS: BREAK REQ" , 0);
+  regcomp(&regex, ".*ACQ STATUS: BREAK_REQ" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Fault;}
+  regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: ERROR_GETTING_STATE" , 0);
   if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Fault;}
+  regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: UNKNOWN" , 0);
-  if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Fault;}
+  if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Fault;}  
+  regfree(&regex);
   
   
   
@@ -877,22 +1023,30 @@ void pixiradDetector::printMissingImageInfo(){
   DEB_MEMBER_FUNCT();
   
   if(m_allImagesReceived == false){
-    DEB_ALWAYS() << "EE Acquisition thread think that all images has not been received"  << DEB_VAR1(m_allImagesReceived)  ;
+    DEB_ALWAYS() << "EE Acquisition thread think that all images have not been received"  << DEB_VAR1(m_allImagesReceived)  ;
   }
   else{
     DEB_ALWAYS() << "OK Acquisition thread think that all images have been received" << DEB_VAR1(m_allImagesReceived)  ; 
   }
   
   DEB_TRACE() << "Searching for incomplete images.";
-  for (int img = 0; img<m_nbFramesAcq; img++){
-    
-    if( m_acknowledgatorPointer[img] < m_numberOfUDPPacketsPerImage ){
-      
-      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR2(img,m_numberOfUDPPacketsPerImage - m_acknowledgatorPointer[img]);
-      
-    }
+  
+  int lastDatagramToKeep = 0;
+  if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
+    lastDatagramToKeep = 2539;
+  }
+  else{
+    lastDatagramToKeep = 317;
   }
   
+  
+  for (int img = 0; img<m_nbFramesAcq; img++){
+    
+    if( m_acknowledgatorPointer[img] < lastDatagramToKeep ){
+      
+      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR2(img,lastDatagramToKeep - m_acknowledgatorPointer[img]);
+    }
+  }
 }
 
 

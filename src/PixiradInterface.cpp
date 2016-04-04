@@ -54,20 +54,6 @@ Interface::Interface(Camera& cam) : m_cam(cam), m_det_info(cam), m_sync(cam)
 	
 	m_reconstruction = new ReconstructionCtrlObj(m_cam);
 	m_cap_list.push_back(HwCap(m_reconstruction));
-	
-	
-//	m_sync.setNbFrames(1);
-//	m_sync.setExpTime(1.0);
-//	m_sync.setLatTime(0.0);
-//	m_sync.setTrigMode(IntTrig);
-//	Size image_size;
-//	m_det_info.getMaxImageSize(image_size);
-//	ImageType image_type;
-//	m_det_info.getDefImageType(image_type);
-//	FrameDim frame_dim(image_size, image_type);
-//	m_bufferCtrlObj->setFrameDim(frame_dim);
-//	m_bufferCtrlObj->setNbConcatFrames(1);
-//	m_bufferCtrlObj->setNbBuffers(2);
 }
 
 
@@ -96,6 +82,7 @@ void Interface::reset(ResetLevel reset_level) {
 
 void Interface::prepareAcq() {
 	DEB_MEMBER_FUNCT();
+	
 	m_cam.prepareAcq();
 	
 	m_reconstruction->prepareAcq();
@@ -132,9 +119,21 @@ int Interface::getNbHwAcquiredFrames() {
 }
 
 
+/// Pour call back on size change
 
+void DetInfoCtrlObj::registerMaxImageSizeCallback(
+					HwMaxImageSizeCallback& cb)
+{
+	DEB_MEMBER_FUNCT();
+// 	m_cam.registerMaxImageSizeCallback(cb);
+}
 
-
+void DetInfoCtrlObj::unregisterMaxImageSizeCallback(
+					HwMaxImageSizeCallback& cb)
+{
+	DEB_MEMBER_FUNCT();
+// 	m_cam.unregisterMaxImageSizeCallback(cb);
+}
 
 
 

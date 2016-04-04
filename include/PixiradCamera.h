@@ -71,6 +71,8 @@ public:
 	void prepareAcq();
 	void startAcq();
 	void stopAcq();
+	
+	void autocalibration();
         
 //	void getStatus(); // Not good idea
 	void getStatus(HwInterface::StatusType::Basic& status);
@@ -306,6 +308,10 @@ public:
 	
 	
 	
+	void setSeedModeForDebugOnlyInOneChipWithPX8(bool saintRita);
+	void getSeedModeForDebugOnlyInOneChipWithPX8(bool& saintRita);
+	void setWhichModuleOutOfEightOnPX8(int module);
+	void getWhichModuleOutOfEightOnPX8(int & module);
 	
         
 private:

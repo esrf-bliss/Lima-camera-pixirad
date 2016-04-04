@@ -61,6 +61,8 @@ public:
 	virtual void getPixelSize(double& x_size, double &y_size);
 	virtual void getDetectorType(std::string& det_type);
 	virtual void getDetectorModel(std::string& det_model);
+	
+	
 
 	virtual void registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
 	virtual void unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
@@ -69,6 +71,9 @@ public:
         
 private:
 	Camera& m_cam;
+	
+	// For call back on size changes
+// 	HwMaxImageSizeCallbackGen m_mis_cb_gen;
 };
 
 /*******************************************************************
@@ -200,12 +205,10 @@ public:
 	void getAlarmHumidityEnabled(bool& information);
 	
 	
-	
-	
 
 	
 private:
-    Camera& m_cam;
+	Camera& m_cam;
 
 
 	CapList m_cap_list;

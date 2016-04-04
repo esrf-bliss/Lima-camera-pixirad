@@ -15,7 +15,7 @@ import socket # For hostaname
 if (socket.gethostname() == "linfalcon"):
     sys.path.append('/home/watier/LimaGitLab/Lima_test/install')
 if (socket.gethostname() == "lid00limabois"):
-    sys.path.append('/users/watier/Lima_test/install')
+    sys.path.append('/users/watier/lima/install')
 if (socket.gethostname() == "lbm05pixirad"):
     sys.path.append('/users/watier/Git/lima/install')
 
@@ -38,6 +38,12 @@ def debugtrace():
   db.setTypeFlagsNameList(['Trace'])
   db.setTypeFlagsNameList(['Trace','Funct'])
 
+def debugchucknorris():
+  db = Core.DebParams()
+  db.setModuleFlagsNameList(["Camera", "Control"]) 
+  db.setTypeFlagsNameList(['Trace'])
+  db.setTypeFlagsNameList(['Trace','Funct'])
+
 
 def debugwarning():
   db = Core.DebParams()
@@ -55,13 +61,15 @@ debugtrace()
 
 print "\n\n\n\n ======= INIT ======== \n"
 
+debugchucknorris()
+
 
 #camera = PixiradAcq.Camera("172.24.8.135", 6666)
 camera = PixiradAcq.Camera("192.168.0.1", 2222)
 
 camera.init()  ### Verifier INIT TODO
 
-time.sleep(3)
+#time.sleep(3)
 
 #print "\n\n\n\n ======= RESET ======== \n"
 
@@ -82,14 +90,45 @@ camera_interface.setRunConfigMode(camera.DATA)
 camera_interface.setHybridMode(camera.CDTE)
 #camera_interface.setSensorConfigBuild(camera.PX8)
 
-camera_interface.setSensorConfigBuild(camera.PX1)
+camera_interface.setSensorConfigBuild(camera.PX8)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
 
-
+camera.setCoolingTemperatureSetpoint(15)
 
 camera.setHighThreshold0(25)
-camera.setLowThreshold0(8)
+camera.setLowThreshold0(0)
+
+camera.setLowThreshold0(0)
+camera.setHighThreshold0(60)
+camera.setLowThreshold1(0)
+camera.setHighThreshold1(65)
+
+camera.setHighVoltageBiais(400)
+camera.setHVBiasModePower(1)
+
+
+#camera_interface.setTrsfMode(camera.MOD)
+camera.setTrsfMode(camera.UNMOD)
+
+#beforePrepare = time.time()
+
+
+#print "\n\n\n\n ======= PREPARE UDP Tuning  ======== \n"
+#camera_interface.setNCyclesUdpDelay(0)
+#camera_interface.setNCyclesUdpDelay(10000) # 
+#camera_interface.setNCyclesUdpDelay(100)
+#camera_interface.setNCyclesUdpDelay(500)
+
+
+#time.sleep(1)
+
+
+
+# FOrce image generation on the PX8
+
+camera.setSeedModeForDebugOnlyInOneChipWithPX8(True)
+camera.setWhichModuleOutOfEightOnPX8(0)
 
 
 
@@ -112,7 +151,9 @@ def newsave(newsaving, basename):
   pars.directory='/users/watier/test_du_stagiaire'
   pars.prefix=basename
   pars.suffix='.edf'
+  #pars.suffix='.raw'
   pars.fileFormat=Core.CtSaving.EDF
+  #pars.fileFormat=Core.CtSaving.RAW
   pars.savingMode=Core.CtSaving.AutoFrame
   newsaving.setParameters(pars)
 
@@ -145,29 +186,13 @@ acq.setAcqNbFrames(1)
 
 #afterfirstimage = time.time()+1 # Update when acq really start on the detector level.
 
-camera.setLowThreshold0(0)
-camera.setHighThreshold0(60)
-camera.setLowThreshold1(0)
-camera.setHighThreshold1(65)
-
-camera.setHighVoltageBiais(400)
-camera.setHVBiasModePower(1)
 
 
-#camera_interface.setTrsfMode(camera.MOD)
-camera.setTrsfMode(camera.UNMOD)
-
-#beforePrepare = time.time()
 
 
-#print "\n\n\n\n ======= PREPARE UDP Tuning  ======== \n"
-#camera_interface.setNCyclesUdpDelay(0)
-#camera_interface.setNCyclesUdpDelay(10000) # 
-#camera_interface.setNCyclesUdpDelay(100)
-#camera_interface.setNCyclesUdpDelay(500)
 
 
-#time.sleep(1)
+
 
 
 def defineMaxFramerateForVideo(nbimages, duree, delaiBetweenFrames):
@@ -326,10 +351,10 @@ def energyscan():
   scannumber =scannumber+1
   #accumulation(0.1,5,1)
   
-  acq.setAcqExpoTime(1); 
+  acq.setAcqExpoTime(0.001); 
   acq.setAcqNbFrames(1)
 
-  for i in range(1,59):
+  for i in range(0,60):
     #time.sleep(10)
 
     print "\n\n\n\n ======= SETTERS  ======== \n"
@@ -343,7 +368,7 @@ def energyscan():
     camera.setHighThreshold1(60)
 
     #newsave(saving , str(scannumber)+"_rat_skull_energyScan_"+str(i)+"-"+str(i+1) )
-    newsave(saving ,  time.strftime('rat_skull_%Y_%m_%d-%H_%M_%S__')+str(i)+"-"+str(60) )
+    newsave(saving ,  time.strftime('energy_scan_%Y_%m_%d-%H_%M_%S__')+str(i)+"-"+str(60) )
     
     print "\n\n\n\n ======= PREPARE  ======== \n"
     control.prepareAcq()

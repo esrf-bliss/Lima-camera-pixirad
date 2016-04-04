@@ -58,6 +58,8 @@ lima::Pixirad::Camera::Camera(std::string hostname, int tcpPort) :
     
 //        pixiradDetector *m_pixirad = new pixiradDetector(m_hostname, m_tcpPort);
         m_pixirad = new pixiradDetector(m_hostname, m_tcpPort, m_bufferCtrlObj);
+	
+	init();
 
 }
 
@@ -198,11 +200,6 @@ res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);
 
 
 
-///  Trouve via WS sur limande (No documentation):
-// DAQ! SET_RO_SCHEMA DEFAULT
-
-command = string("DAQ:! SET_RO_SCHEMA "+ m_pixirad->m_readOutSchema );
-res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
 
 
 resetAllAlarms();
@@ -228,13 +225,10 @@ resetAllAlarms();
 //     “DISABLED”.
 //     By default Alarm status message is sent over UDP at port 2225.
 
-// TODO:  Needs alarm to stop acquisition.
+
+	autocalibration();
 
 
-	
-	
-	DEB_TRACE() <<DEB_VAR1(res); 
-	
 	m_pixirad->setStatusDetector(HwInterface::StatusType::Ready);
 	
 }
@@ -264,11 +258,33 @@ void lima::Pixirad::Camera::reset() {
 	
 }
 
+void lima::Pixirad::Camera::autocalibration() {
+	DEB_MEMBER_FUNCT();
+
+/*
+DAQ:! AUTOCAL [mode]
+Parameters
+mode
+(S) Autocompensation codes readout option (optional):
+“BOTH” to read pre and post calibration codes;
+“LAST” to read only post-calibration codes;
+“NOCODES” no caòlibration code read-out;
+Description
+Triggers the Detector Offsets Calibration. If no parameters are specified, bot pre and
+	*/
+
+	
+	std::string command;
+	command = string("DAQ:! AUTOCAL" );
+	res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
+	DEB_TRACE() << "Autocalibration " <<DEB_VAR1(commandAnswerFromDetector); 
+}
+
 void lima::Pixirad::Camera::prepareAcq() {
 	DEB_MEMBER_FUNCT();
         
 	
- 	m_pixirad->prepareAcq(); // initialise local reconstruction buffer
+ 	m_pixirad->prepareAcq(); // initialise local reconstruction buffer and  frame dimension
         
     std::string command;
     
@@ -368,6 +384,55 @@ void lima::Pixirad::Camera::prepareAcq() {
 	
 	res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
 	DEB_TRACE() << DEB_VAR1(res);
+	
+	
+	
+	
+	
+	// The PX8 has 8 modules, but you can ask it to use only one of them.   // -1 is 8 modules mode //  [0-7] is module selected.
+	
+      if (m_pixirad->m_sensorConfigBuild == "PX8" ){
+	
+	 if (m_pixirad->m_oneChipModeOutOfEight >= 0  or m_pixirad->m_oneChipModeOutOfEight <= 7) {
+	    
+	      // Do not do this 
+	      if(m_pixirad->m_seedModeForDebugOnlyInOneChipWithPX8){
+		// What did I say two line above ?
+		command = string("DAQ:! SET_DATA_TEST 1"); 	
+		res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
+		DEB_TRACE() << DEB_VAR1(res);
+	      }
+	      else {	  
+		command = string("DAQ:! SET_DATA_TEST 0"); 	
+		res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
+		DEB_TRACE() << DEB_VAR1(res);	  
+	      }
+	      
+	      
+	    command = string("DAQ:! SET_RO_SCHEMA CHIP" + to_string(m_pixirad->m_oneChipModeOutOfEight)); 	
+	    res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
+	    DEB_TRACE() << DEB_VAR1(res);
+	 }
+	 else{
+	    // 8 modules mode
+	    command = string("DAQ:! SET_RO_SCHEMA DEFAULT");
+	    res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	    
+	    DEB_TRACE() << DEB_VAR1(res);
+	 }
+	 
+	
+	
+      }
+      
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 }
 
@@ -504,7 +569,7 @@ void lima::Pixirad::Camera::getDetectorModel(std::string& model) {
 
 void lima::Pixirad::Camera::getDetectorImageSize(Size& size) {
   DEB_MEMBER_FUNCT();
-  
+/*
   // Default
   size = Size(0, 0);
   
@@ -513,15 +578,21 @@ void lima::Pixirad::Camera::getDetectorImageSize(Size& size) {
   
   if(build == PX1){
     DEB_TRACE() << "Pixel number is selected for a PX1" ;
-    size = Size(476, 512);
+     size = Size(476, 512);
+//    size = Size(512, 476);
   }
   
   if(build == PX8){
     DEB_TRACE() << "Pixel number is selected for a PX8" ;
     size = Size(476, 4096);  // TODO: CHANGE FOR PX8 REAL SIZE
-    
-    
-  }
+  } 
+    */
+  
+  
+  size = Size(0, 0);
+  
+  m_pixirad->getSize(size);
+  
   
 }
 
@@ -1184,6 +1255,50 @@ void lima::Pixirad::Camera::getDelayBetweenFrames(int& delayms){
         delayms = m_pixirad->m_pauseBetweenAcq ;
         DEB_TRACE() << DEB_VAR2(m_pixirad->m_pauseBetweenAcq,delayms);
 }
+
+
+
+//     int m_oneChipModeOutOfEight = 0;      
+//    bool m_seedModeForDebugOnlyInOneChipWithPX8 = false;
+
+void lima::Pixirad::Camera::setWhichModuleOutOfEightOnPX8(int module){
+	DEB_MEMBER_FUNCT();    
+        if (module>=0 and module < 8){  // 01234567  are real modules, else => -1 meaning
+	    DEB_TRACE() << "Configuration for a PX8 detector with only 1 module. Chosen module is :" << DEB_VAR1(module);
+            m_pixirad->m_oneChipModeOutOfEight = module;
+        }
+        else {
+// 	  8 modules 
+	    DEB_TRACE() << "Configuration for a PX8 detector with 8 modules. " ;
+            m_pixirad->m_oneChipModeOutOfEight = -1;	  
+	}
+        DEB_TRACE() << DEB_VAR2(m_pixirad->m_oneChipModeOutOfEight,module);
+	
+}
+void lima::Pixirad::Camera::getWhichModuleOutOfEightOnPX8(int& module){
+	DEB_MEMBER_FUNCT();    
+        module = m_pixirad->m_oneChipModeOutOfEight ;
+        DEB_TRACE() << DEB_VAR2(m_pixirad->m_oneChipModeOutOfEight,module);
+}
+
+
+void lima::Pixirad::Camera::setSeedModeForDebugOnlyInOneChipWithPX8(bool saintRita){
+	DEB_MEMBER_FUNCT();   
+	
+        m_pixirad->m_seedModeForDebugOnlyInOneChipWithPX8 = saintRita;
+        if (saintRita){  
+	    DEB_TRACE() << "You have my sincere sympathy for debugging the image reconstruction." << DEB_VAR1(saintRita);
+        }
+	
+        DEB_TRACE() << DEB_VAR2(m_pixirad->m_seedModeForDebugOnlyInOneChipWithPX8,saintRita);
+}
+void lima::Pixirad::Camera::getSeedModeForDebugOnlyInOneChipWithPX8(bool& saintRita){
+	DEB_MEMBER_FUNCT();    
+        saintRita = m_pixirad->m_seedModeForDebugOnlyInOneChipWithPX8 ;
+        DEB_TRACE() << DEB_VAR2(m_pixirad->m_seedModeForDebugOnlyInOneChipWithPX8,saintRita);
+}
+
+
 
 
 

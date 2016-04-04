@@ -218,6 +218,14 @@ using namespace lima;
 	void getAlarmHumidity(bool& information /Out/);
 	void getAlarmHumidityEnabled(bool& information /Out/);
 	
+	
+	
+	void setSeedModeForDebugOnlyInOneChipWithPX8(bool saintRita);
+	void getSeedModeForDebugOnlyInOneChipWithPX8(bool& saintRita /Out/);
+	void setWhichModuleOutOfEightOnPX8(int module);
+	void getWhichModuleOutOfEightOnPX8(int & module /Out/);
+
+	
 	void printMissingImageInfo();
 	
 	void sendCommandForDetectorCooling();

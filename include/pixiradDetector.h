@@ -151,9 +151,6 @@ public:
    int Tcold;
    // };*/
   
-  // Mode where e pixirad8 is used with only one module. -1 means 8 modules together.
-    int m_oneChipModeOutOfEight = -1;  
-    
     
   
   int MAXSIZEFORSOCKETBUFFER = 256217728; // 4000000; 256217728 
@@ -212,7 +209,8 @@ public:
   
   // Environmental parameters config
   //! Env_Config CoolT CollStatus HVVal HVStatus
-  int m_envConfigCoolingTemperature = -30; // deg C
+//   int m_envConfigCoolingTemperature = -30; // deg C
+  int m_envConfigCoolingTemperature = 15; // deg C
   int m_envConfigCoolingOnOff = 1; //0-off / 1-on
   int m_envConfigHighVoltageBiais = 400; // Volts
   int m_envConfigHighVoltageBiaisOnOff = 1; //0-off / 1-on
@@ -292,7 +290,7 @@ public:
   
   void getStatusDetector(HwInterface::StatusType::Basic& status);
   
-  
+  void getSize(Size & size);
   
   // Buffer for Lima
   //    BufferCtrlMgr m_buffer;
@@ -304,7 +302,7 @@ public:
   
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
-  int m_nbOfFrameInReconstructionBuffer = 16;
+  int m_nbOfFrameInReconstructionBuffer = 32;
   
   
   
@@ -330,7 +328,11 @@ public:
   ushort *m_acknowledgatorPointer;
   
   
-  
+  // Mode where e pixirad8 is used with only one module. -1 means 8 modules together.
+//     int m_oneChipModeOutOfEight = -1;  
+    int m_oneChipModeOutOfEight = -1;  
+    
+   bool m_seedModeForDebugOnlyInOneChipWithPX8 = false;
   
   
   // /////////////// START   ////////////////////
