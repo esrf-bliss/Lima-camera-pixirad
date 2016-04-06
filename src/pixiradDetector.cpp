@@ -351,11 +351,11 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	regcomp(&regex, ".*PIXIRAD-8 SN 8000.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
-	  if (m_sensorConfigBuild != "PX8"){
+	  if (m_sensorConfigBuild != "PX8"){ // Only first time
 	    m_sensorConfigAsic = "PII";
 	    m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
 	    m_UdpPortImages = 9999;
-	    
+	    m_nbModules =8;
 	    m_sensorConfigBuild = "PX8"; // PX1 PX2 PX8
 	    
 	    DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
@@ -666,7 +666,7 @@ void pixiradDetector::getImages()
   int lastDatagramToKeep = 0;
   int amountOfTheLastDatagramToKeep = 0;
   if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
-    lastDatagramToKeep = 2539;
+    lastDatagramToKeep = 2538;
     amountOfTheLastDatagramToKeep= 960;
     m_numberOfUDPPacketsPerImage = 2539; 
   }
@@ -857,12 +857,13 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
       uint32_t sizeOfCommand = command.length();
       
       // Then the message itself.
-      resultConnection = write(m_socketToPixiradServer, command.c_str(), sizeOfCommand); 
+      command.append("\n");
+      resultConnection = write(m_socketToPixiradServer, command.c_str(), sizeOfCommand+1); 
       
       
 //       DEB_TRACE() << "TX --- Sent successfully the command: " << DEB_VAR1(resultConnection);
       
-      resultConnection2 = write(m_socketToPixiradServer, "\n", 2); 
+//       resultConnection2 = write(m_socketToPixiradServer, "\n", 2); 
       
 //       DEB_TRACE() << "TX --- Sent successfully the cariage return: " << DEB_VAR1(resultConnection2);
       
@@ -992,7 +993,7 @@ void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status)
   regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: BREAK_REQ" , 0);
-  if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Fault;}
+  if ( regexec(&regex, detectorStatusFromDetector, 0, NULL, 0) == 0 ){m_pixiradStatus = HwInterface::StatusType::Ready;}
   regfree(&regex);
   
   regcomp(&regex, ".*ACQ STATUS: ERROR_GETTING_STATE" , 0);
@@ -1033,7 +1034,7 @@ void pixiradDetector::printMissingImageInfo(){
   
   int lastDatagramToKeep = 0;
   if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
-    lastDatagramToKeep = 2539;
+    lastDatagramToKeep = 2538;
   }
   else{
     lastDatagramToKeep = 317;
@@ -1044,7 +1045,7 @@ void pixiradDetector::printMissingImageInfo(){
     
     if( m_acknowledgatorPointer[img] < lastDatagramToKeep ){
       
-      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR2(img,lastDatagramToKeep - m_acknowledgatorPointer[img]);
+      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR3(img,lastDatagramToKeep, lastDatagramToKeep - m_acknowledgatorPointer[img]);
     }
   }
 }

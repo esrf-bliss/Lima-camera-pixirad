@@ -49,7 +49,10 @@ typedef struct{
 // All functions needs to extract/convert/map fpgastream to image
 void my_bytes_swap (unsigned short* us_ptr);
 
-int convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_offset, unsigned short* destination_memory_offset, SENSOR Sens, int verbose);
+// int convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_offset, unsigned short* destination_memory_offset, SENSOR Sens, int verbose);
+
+
+void convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_offset, unsigned short* destination_memory_offset, int douts);
 
 
 

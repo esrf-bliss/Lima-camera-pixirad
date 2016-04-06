@@ -127,8 +127,8 @@ camera.setTrsfMode(camera.UNMOD)
 
 # FOrce image generation on the PX8
 
-camera.setSeedModeForDebugOnlyInOneChipWithPX8(True)
-camera.setWhichModuleOutOfEightOnPX8(0)
+#camera.setSeedModeForDebugOnlyInOneChipWithPX8(True)
+#camera.setWhichModuleOutOfEightOnPX8(0)
 
 
 

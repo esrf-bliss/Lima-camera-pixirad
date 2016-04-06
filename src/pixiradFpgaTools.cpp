@@ -36,12 +36,38 @@ void lima::Pixirad::my_bytes_swap (unsigned short* us_ptr){
 
 
 
+// This one came from AreaDetector from APS.
 
+void lima::Pixirad::convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_offset,
+                                        unsigned short* destination_memory_offset, int douts)
+{
+  
+//   DEB_STATIC_FUNCT();
+//    DEB_TRACE()<<"convert_bit_stream_to_counts "<<DEB_VAR4(code_depth, source_memory_offset, destination_memory_offset, douts);
+  
+    int i,j;
+    unsigned short dout_masks[16], mask_seed=1;
+    for(i=0;i<douts;i++) dout_masks[i]=(mask_seed<<i);
+    for(j=0;j<douts;j++){
+        destination_memory_offset[j]=0;
+        for(i=code_depth-1;i>=0;i--){
+            if(source_memory_offset[i] & dout_masks[j])
+                destination_memory_offset[j]|= dout_masks[code_depth-i-1];
+            else
+                destination_memory_offset[j]&= ~dout_masks[code_depth-i-1];
+        }
+    }
+//     return j;
+}
+
+/*
 
 int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* source_memory_offset,
 				 unsigned short* destination_memory_offset,SENSOR Sens,int verbose){
 //    DEB_STATIC_FUNCT();
 //    DEB_TRACE()<<"convert_bit_stream_to_counts "<<DEB_VAR4(code_depth, source_memory_offset, destination_memory_offset, Sens);
+
+//   This method convert the 15bit stream to 16 bits counters
   
   int i,j;
   unsigned short dout_masks[Sens.dout],counter_masks[code_depth]
@@ -55,26 +81,37 @@ int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* s
   if(Sens.Asic==PII){
     dout_mask_seed=0x0001;
     cnt_mask_seed=(0x0001 << (code_depth-1));
+    
+    // Building array of masks, dout_masks being for 16 bit, counter_masks for 15 bits.
+    // dout_masks [ 0000...001,   0000...010,   000...100,   ... ,  010...000,  ]
+    // counter_masks [ 010...000 ,  001....00,  ...  , 000...001 ]
+    
     for(i=0;i<Sens.dout;i++) dout_masks[i]=(dout_mask_seed<<i);
     for(i=0;i<code_depth;i++) counter_masks[i]=(cnt_mask_seed>>i);
   }
+  
   for(j=0;j<Sens.dout;j++){
+//     for the next 16 =>0
     destination_memory_offset[j]=0;
+    
     for(i=0;i<code_depth;i++){
+      
+//       Compare source / dest for all 15 masks
+      
+      // If it has a 1 at i place in bit stream copy it 
       if(source_memory_offset[i] & dout_masks[j]){
 	destination_memory_offset[j]|= counter_masks[i];
-// 	printf("bit[%d] found @ %d applying mask %x(set)\n",i,source_memory_offset[i] & dout_masks[j],counter_masks[i]);
       }
+      // If it has a 0 copy it too.
       else{
 	destination_memory_offset[j]&= ~counter_masks[i];
-// 	printf("bit[%d] found @ %d applying mask %x(reset)\n",i,source_memory_offset[i] & dout_masks[j],counter_masks[i]);
       }
     }
   }
 
   return(j);
 }
-				 
+	*/			 
 
 
  void lima::Pixirad::decode_pixie_data_buffer(unsigned short* table, int table_depth, unsigned short* databuffer,int databuffer_len){

@@ -92,6 +92,8 @@ Data  _ReconstructionTask::process(Data& src)
  
      ushort *sourceAsInt = reinterpret_cast<ushort*>(source); 
      
+//      ushort *destinationAsInt = reinterpret_cast<uint16_t*>(destination);   
+     
      ushort *destinationAsInt = reinterpret_cast<ushort*>(destination);   
      
      
@@ -139,8 +141,9 @@ Data  _ReconstructionTask::process(Data& src)
      
      //ushort temporaryBufferLocal[8*476*512*15]; // TODO: change for one module. // This is local_buffer_ptr
      unsigned short *temporaryBufferLocal;
-      temporaryBufferLocal=(unsigned short *)calloc(nbModules*pixieRows*pixieCols*codeDepth, sizeof(unsigned short)); // This give memory problem or not ?
-//     temporaryBufferLocal=(unsigned short *)calloc(nbModules*pixieRows*pixieCols*codeDepth+(colsPerDout*pixieRows*codeDepth)+15, sizeof(unsigned short));
+      temporaryBufferLocal=(unsigned short *)calloc(nbModules*pixieRows*pixieCols, sizeof(unsigned short)); 
+      
+//       memset(&temporaryBufferLocal, '0', 2*nbModules*pixieRows*pixieCols); // not useful as we are doing calloc.
      
      
      char *sourceAsChar = reinterpret_cast<char*>(source); 
@@ -179,16 +182,22 @@ Data  _ReconstructionTask::process(Data& src)
      
      for(int i=0;i<nbModules;i++){
        for(int j=0;j<colsPerDout*pixieRows;j++){
-	  convert_bit_stream_to_counts(codeDepth, temporaryBufferLocal + (i*colsPerDout*pixieRows*codeDepth) + (j*codeDepth), destinationAsInt + (i*matrix_dim_words) + (j*douts), Sens, 0);
+// 	  convert_bit_stream_to_counts(codeDepth, 
+// 				       temporaryBufferLocal + (i*colsPerDout*pixieRows*codeDepth) + (j*codeDepth), 
+// 				       destinationAsInt + (i*matrix_dim_words) + (j*douts), Sens, 0);
+      // AD Style
+	  convert_bit_stream_to_counts(codeDepth, 
+				       temporaryBufferLocal + (i*colsPerDout*pixieRows*codeDepth) + (j*codeDepth), 
+				       destinationAsInt + (i*matrix_dim_words) + (j*douts), douts);
 	  
      }
     }
-    
+    /*
      char *sourceAsChar3 = reinterpret_cast<char*>(destinationAsInt); 
-     std::ofstream b_stream3("/tmp/destinationAsInt_3.bin", std::fstream::out | std::fstream::binary);
+     std::ofstream b_stream3("/tmp/destinationAsInt_3a.bin", std::fstream::out | std::fstream::binary);
      b_stream3.write(sourceAsChar3, pixieRows*pixieCols*nbModules*2);
      b_stream3.close();
-     
+     */
     
      
      DEB_TRACE()<< "FPGA (3) Decode + (4) Sort + (5) Map " << DEB_VAR4( Sens.conv_table.ptr, Sens.conv_table.depth,Sens.matrix_size_pxls , matrix_dim_words);
@@ -196,21 +205,43 @@ Data  _ReconstructionTask::process(Data& src)
     for(int i=0;i<nbModules;i++){  
       
 //      The pseudo-random decoding must be temporarily disabled because the test pattern is natural binary coded. 
-    //  decode_pixie_data_buffer( Sens.conv_table.ptr,  Sens.conv_table.depth, destinationAsInt+i*matrix_dim_words, Sens.matrix_size_pxls  );
-
+      decode_pixie_data_buffer( Sens.conv_table.ptr,  
+				Sens.conv_table.depth,
+				destinationAsInt+i*matrix_dim_words,
+				Sens.matrix_size_pxls  );
+    }
+  /*    
+     char *sourceAsChar6 = reinterpret_cast<char*>(destinationAsInt); 
+     std::ofstream b_stream6("/tmp/destinationAsInt_3b.bin", std::fstream::out | std::fstream::binary);
+     b_stream6.write(sourceAsChar6, pixieRows*pixieCols*nbModules*2);
+     b_stream6.close();
+  */   
+      
+      
+    for(int i=0;i<nbModules;i++){ 
       databuffer_sorting(destinationAsInt+i*matrix_dim_words,Sens);
-
+    }
+      
+   /*   
+     char *sourceAsChar7 = reinterpret_cast<char*>(destinationAsInt); 
+     std::ofstream b_stream7("/tmp/destinationAsInt_3c.bin", std::fstream::out | std::fstream::binary);
+     b_stream7.write(sourceAsChar7, pixieRows*pixieCols*nbModules*2);
+     b_stream7.close();
+    */ 
+      
+      
+    for(int i=0;i<nbModules;i++){ 
       if (Sens.Asic==PII){
 	map_data_buffer_on_pixie(destinationAsInt+i*matrix_dim_words,Sens);
       }
     }
     
-    
+   /* 
      char *sourceAsChar4 = reinterpret_cast<char*>(destinationAsInt); 
      std::ofstream b_stream4("/tmp/destinationAsInt_4.bin", std::fstream::out | std::fstream::binary);
      b_stream4.write(sourceAsChar4, pixieRows*pixieCols*nbModules*2);
      b_stream4.close();
-     
+     */
     
     free(temporaryBufferLocal);
      
