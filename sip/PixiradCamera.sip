@@ -231,7 +231,7 @@ using namespace lima;
 	void sendCommandForDetectorCooling();
 	void resetAllAlarms();
 	
-	
+	void autocalibration();
 
     };
 

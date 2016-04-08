@@ -37,7 +37,7 @@ void lima::Pixirad::my_bytes_swap (unsigned short* us_ptr){
 
 
 // This one came from AreaDetector from APS.
-
+/*
 void lima::Pixirad::convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_offset,
                                         unsigned short* destination_memory_offset, int douts)
 {
@@ -58,27 +58,20 @@ void lima::Pixirad::convert_bit_stream_to_counts(int code_depth, unsigned short*
         }
     }
 //     return j;
-}
+}*/
 
-/*
 
-int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* source_memory_offset,
-				 unsigned short* destination_memory_offset,SENSOR Sens,int verbose){
+
+void lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* source_memory_offset,
+				 unsigned short* destination_memory_offset,int dout){
 //    DEB_STATIC_FUNCT();
 //    DEB_TRACE()<<"convert_bit_stream_to_counts "<<DEB_VAR4(code_depth, source_memory_offset, destination_memory_offset, Sens);
 
 //   This method convert the 15bit stream to 16 bits counters
   
   int i,j;
-  unsigned short dout_masks[Sens.dout],counter_masks[code_depth]
-  ,dout_mask_seed,cnt_mask_seed;
-  if(Sens.Asic==PIII){
-    dout_mask_seed=0x0001;
-    cnt_mask_seed=(0x0001 << (code_depth-1));//Be aware counter are 15 bits wide
-    for(i=0;i<Sens.dout;i++) dout_masks[i]=(dout_mask_seed<<i);
-    for(i=0;i<code_depth;i++) counter_masks[i]=(cnt_mask_seed>>i);
-  }
-  if(Sens.Asic==PII){
+  unsigned short dout_masks[dout],counter_masks[code_depth],dout_mask_seed,cnt_mask_seed;
+  
     dout_mask_seed=0x0001;
     cnt_mask_seed=(0x0001 << (code_depth-1));
     
@@ -86,11 +79,11 @@ int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* s
     // dout_masks [ 0000...001,   0000...010,   000...100,   ... ,  010...000,  ]
     // counter_masks [ 010...000 ,  001....00,  ...  , 000...001 ]
     
-    for(i=0;i<Sens.dout;i++) dout_masks[i]=(dout_mask_seed<<i);
+    for(i=0;i<dout;i++) dout_masks[i]=(dout_mask_seed<<i);
     for(i=0;i<code_depth;i++) counter_masks[i]=(cnt_mask_seed>>i);
-  }
   
-  for(j=0;j<Sens.dout;j++){
+  
+  for(j=0;j<dout;j++){
 //     for the next 16 =>0
     destination_memory_offset[j]=0;
     
@@ -109,9 +102,8 @@ int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* s
     }
   }
 
-  return(j);
 }
-	*/			 
+
 
 
  void lima::Pixirad::decode_pixie_data_buffer(unsigned short* table, int table_depth, unsigned short* databuffer,int databuffer_len){
@@ -124,15 +116,16 @@ int lima::Pixirad::convert_bit_stream_to_counts(int code_depth,unsigned short* s
 
 
 //databuffer_sorting arranges data from fpga in an array in which 16 sectors (31200 pixel each) are contiguos in memory
-int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a,SENSOR Sens){
+int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a, int dout, int rows, int cols_per_dout, int matrix_size_pxls){
+  
   int PIXELS_IN_SECTOR;
   unsigned short	*buffer_b;
-  PIXELS_IN_SECTOR=(Sens.cols_per_dout * Sens.rows);
+  PIXELS_IN_SECTOR=(cols_per_dout * rows);
   int sector_cntr,pixel_cntr;
   
   
   
-  buffer_b=(unsigned short*)calloc(Sens.matrix_size_pxls, sizeof(unsigned short));
+  buffer_b=(unsigned short*)calloc(matrix_size_pxls, sizeof(unsigned short));
   
   /*
   if (buffer_b==NULL) {
@@ -143,10 +136,10 @@ int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a,SENSOR Sens){
     //the filling starts from the end of each sector up to the beginning
     //this because the first data you get from fpga actually is the last pixel of the sector
     //you are reading out
-    for(sector_cntr=0; sector_cntr<Sens.dout; sector_cntr++){
+    for(sector_cntr=0; sector_cntr<dout; sector_cntr++){
       for(pixel_cntr=0; pixel_cntr<PIXELS_IN_SECTOR; pixel_cntr++){
 	//buffer_b[((sector_cntr+1)*PIXELS_IN_SECTOR_MAP)-pixel_cntr-1]=buffer_a[sector_cntr+pixel_cntr*PIXIE_DOUTS];
-	buffer_b[((sector_cntr+1)*PIXELS_IN_SECTOR) - pixel_cntr - 1]=buffer_a[sector_cntr + pixel_cntr*Sens.dout];
+	buffer_b[((sector_cntr+1)*PIXELS_IN_SECTOR) - pixel_cntr - 1]=buffer_a[sector_cntr + pixel_cntr*dout];
 	//					printf("databuffer sorting:px=\t%d sect=\t%d buffer_a=\t%d\n"
 	//							,pixel_cntr
 	//							,sector_cntr
@@ -162,7 +155,7 @@ int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a,SENSOR Sens){
     //		buffer_b[((sector_cntr)*PIXELS_IN_SECTOR_MAP+PIXELS_IN_LAST_SECTOR_MAP)-pixel_cntr-1]=buffer_a[sector_cntr+pixel_cntr*PIXIE_DOUTS];}
     
     //copying buffer to the original one and adding
-    for(pixel_cntr=0; pixel_cntr<Sens.matrix_size_pxls; pixel_cntr++)
+    for(pixel_cntr=0; pixel_cntr<matrix_size_pxls; pixel_cntr++)
       buffer_a[pixel_cntr]=buffer_b[pixel_cntr];
     //			for(pixel_cntr=0; pixel_cntr<Sens.matrix_size_pxls; pixel_cntr++)
     //				printf("databuffer sorting:buffer_b[%d]=%d\n",pixel_cntr,buffer_b[pixel_cntr]);
@@ -177,12 +170,12 @@ int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a,SENSOR Sens){
     
 
 //map_data_buffer_on_pixie rearranges data in PIXIE layout taking in account the "snake" readout architecture
-int lima::Pixirad::map_data_buffer_on_pixie(unsigned short *buffer_a, SENSOR Sens){
+int lima::Pixirad::map_data_buffer_on_pixie(unsigned short *buffer_a, int rows, int cols){
 unsigned short* temp_col;
 unsigned short col_cntr,row_cntr;
 int PIXIE_ROWS;
 /******************************/
-PIXIE_ROWS=Sens.rows;
+PIXIE_ROWS=rows;
 /******************************/
 temp_col=(unsigned short*)calloc(PIXIE_ROWS, sizeof(unsigned short));
 // if (temp_col==NULL) {
@@ -195,12 +188,12 @@ temp_col=(unsigned short*)calloc(PIXIE_ROWS, sizeof(unsigned short));
 //sectors 0,2,4,6,8,10,12,14 start with the first column(800 pix) in the right dir
 //sectors 1,3,5,7,8,11,13,15 start with the first column(800 pix) in the reversed dir
 //in general even index columns has the right dir and odd ones are reversed
-for(col_cntr=0;col_cntr<Sens.cols;col_cntr++){
+for(col_cntr=0;col_cntr<cols;col_cntr++){
 if ((col_cntr%2)){//only odd index columns are reversed
-for(row_cntr=0;row_cntr<Sens.rows;row_cntr++){
-temp_col[Sens.rows-row_cntr-1]=buffer_a[col_cntr*Sens.rows+row_cntr];}
-for(row_cntr=0;row_cntr<Sens.rows;row_cntr++){
-  buffer_a[col_cntr*Sens.rows+row_cntr]=temp_col[row_cntr];}
+for(row_cntr=0;row_cntr<rows;row_cntr++){
+temp_col[rows-row_cntr-1]=buffer_a[col_cntr*rows+row_cntr];}
+for(row_cntr=0;row_cntr<rows;row_cntr++){
+  buffer_a[col_cntr*rows+row_cntr]=temp_col[row_cntr];}
 }
 }
 //mirroring
@@ -215,51 +208,6 @@ for(row_cntr=0;row_cntr<Sens.rows;row_cntr++){
 //							}
 
 free(temp_col);
-return(1);}
-
-
-
-int lima::Pixirad::map_data_buffer_on_pixieIII(unsigned short *buffer_a,SENSOR Sens){
-unsigned short* temp_sector;
-unsigned short col_cntr,row_cntr,sector;
-int PIXIE_ROWS,COLS_PER_DOUT;
-/***************************************/
-PIXIE_ROWS=Sens.rows;
-COLS_PER_DOUT=Sens.cols_per_dout;
-/***************************************/
-temp_sector=(unsigned short*)calloc(PIXIE_ROWS*COLS_PER_DOUT, sizeof(unsigned short));
-// if (temp_sector==NULL) {
-// printf("DATA mapping:Memory allocation unsuccesfull!! Please contact an expert :-)\n");
-// return(0);}
-// if(Sens.Asic!=PIII){
-// printf("Asked to map data on PIII but Asic is not PIII\n");
-// return(-1);
-// }
-//sectors 0,2,4,6,8,10,12,14 start with the first column(800 pix) in the right dir
-//sectors 1,3,5,7,8,11,13,15 start with the first column(800 pix) in the reversed dir
-//in general even index columns has the right dir and odd ones are reversed
-for(sector=0;sector<Sens.dout;sector++){
-for(row_cntr=0;row_cntr<Sens.rows;row_cntr++){
-  for(col_cntr=0;col_cntr<Sens.cols_per_dout;col_cntr++){
-    //temp_sector[row_cntr*COLS_PER_DOUT+col_cntr]=buffer_a[row_cntr+col_cntr*PIXIE_ROWS+sector*PIXIE_ROWS*COLS_PER_DOUT];
-    temp_sector[row_cntr+(Sens.cols_per_dout-1-col_cntr)*Sens.rows]=buffer_a[row_cntr*Sens.cols_per_dout+col_cntr+sector*Sens.rows*Sens.cols_per_dout];
-    //temp_sector[row_cntr*COLS_PER_DOUT+col_cntr]=buffer_a[row_cntr*COLS_PER_DOUT+col_cntr+sector*PIXIE_ROWS*COLS_PER_DOUT];
-  }
-}
-memcpy(buffer_a+Sens.rows*Sens.cols_per_dout*sector,temp_sector,Sens.cols_per_dout*Sens.rows*sizeof(unsigned short));
-}
-//mirroring
-//			for(col_cntr=0;col_cntr<PIXIE_COLS/2;col_cntr++){
-//								for(row_cntr=0;row_cntr<PIXIE_ROWS;row_cntr++){
-//									temp_col[row_cntr]=buffer_a[col_cntr*PIXIE_ROWS+row_cntr];}
-//								for(row_cntr=0;row_cntr<PIXIE_ROWS;row_cntr++){
-//									buffer_a[col_cntr*PIXIE_ROWS+row_cntr]=buffer_a[(PIXIE_COLS-col_cntr-1)*PIXIE_ROWS+row_cntr];}
-//								for(row_cntr=0;row_cntr<PIXIE_ROWS;row_cntr++){
-//									buffer_a[(PIXIE_COLS-col_cntr-1)*PIXIE_ROWS+row_cntr]=temp_col[row_cntr];
-//									}
-//							}
-
-free(temp_sector);
 return(1);}
 
 

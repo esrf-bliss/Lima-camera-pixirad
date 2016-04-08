@@ -59,7 +59,6 @@ def videoTest():
 
 
 
-
 #camera.setHVBiasModePower(1)
 #camera.setTrsfMode(camera.UNMOD)
 

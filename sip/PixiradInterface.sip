@@ -122,7 +122,7 @@ public:
 	void getAlarmHumidity(bool& information /Out/ );
 	void getAlarmHumidityEnabled(bool& information /Out/ );
 	
-	
+	void autocalibration();
 };
 
 }; // namespace Pixirad

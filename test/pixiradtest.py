@@ -94,17 +94,17 @@ camera_interface.setSensorConfigBuild(camera.PX8)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
 
-camera.setCoolingTemperatureSetpoint(15)
+camera.setCoolingTemperatureSetpoint(-30)
 
 camera.setHighThreshold0(25)
 camera.setLowThreshold0(0)
 
-camera.setLowThreshold0(0)
+camera.setLowThreshold0(10)
 camera.setHighThreshold0(60)
-camera.setLowThreshold1(0)
+camera.setLowThreshold1(10)
 camera.setHighThreshold1(65)
 
-camera.setHighVoltageBiais(400)
+camera.setHighVoltageBiais(2100)
 camera.setHVBiasModePower(1)
 
 
@@ -130,6 +130,7 @@ camera.setTrsfMode(camera.UNMOD)
 #camera.setSeedModeForDebugOnlyInOneChipWithPX8(True)
 #camera.setWhichModuleOutOfEightOnPX8(0)
 
+#camera.setWhichModuleOutOfEightOnPX8(5)
 
 
 
@@ -180,7 +181,7 @@ print control.Status()
 
 
 
-acq.setAcqExpoTime(0.1)
+acq.setAcqExpoTime(1)
 acq.setAcqNbFrames(1)
 
 
@@ -351,7 +352,7 @@ def energyscan():
   scannumber =scannumber+1
   #accumulation(0.1,5,1)
   
-  acq.setAcqExpoTime(0.001); 
+  acq.setAcqExpoTime(3); 
   acq.setAcqNbFrames(1)
 
   for i in range(0,60):
@@ -368,7 +369,7 @@ def energyscan():
     camera.setHighThreshold1(60)
 
     #newsave(saving , str(scannumber)+"_rat_skull_energyScan_"+str(i)+"-"+str(i+1) )
-    newsave(saving ,  time.strftime('energy_scan_%Y_%m_%d-%H_%M_%S__')+str(i)+"-"+str(60) )
+    newsave(saving ,  time.strftime('energy_scan_source_cedric_%Y_%m_%d-%H_%M_%S__low_')+str(i)+"_high_"+str(60) )
     
     print "\n\n\n\n ======= PREPARE  ======== \n"
     control.prepareAcq()
@@ -378,6 +379,32 @@ def energyscan():
     while not (control.getStatus().AcquisitionStatus == Core.AcqReady) :
       print "\n\n\n\n ======= WAIT  ======== \n\n\n\n"
       time.sleep(0.2)
+      
+      
+      
+      
+      
+      
+def scanModules():
+  
+  
+  acq.setAcqExpoTime(3); 
+  acq.setAcqNbFrames(1)
+  
+  for i in range(0,7):
+    camera.setWhichModuleOutOfEightOnPX8(i)
+    newsave(saving , time.strftime('module_scan_source_cedric_%Y_%m_%d-%H_%M_%S__module_')+str(i))
+    
+    print "\n\n\n\n ======= PREPARE  ======== \n"
+    control.prepareAcq()
+    print "\n\n\n\n ======= START  ======== \n"
+    control.startAcq()
+    
+    while not (control.getStatus().AcquisitionStatus == Core.AcqReady) :
+      print "\n\n\n\n ======= WAIT  ======== \n\n\n\n"
+      time.sleep(0.2)
+      
+  
     
 def exposcan(min, max, increment):  
   

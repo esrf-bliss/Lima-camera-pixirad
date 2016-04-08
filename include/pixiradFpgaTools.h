@@ -60,9 +60,9 @@ void convert_bit_stream_to_counts(int code_depth, unsigned short* source_memory_
 
 void decode_pixie_data_buffer(unsigned short* table, int table_depth, unsigned short* databuffer,int databuffer_len);
 
-int databuffer_sorting(unsigned short *buffer_a,SENSOR Sens);
-int map_data_buffer_on_pixie(unsigned short *buffer_a, SENSOR Sens);
-int map_data_buffer_on_pixieIII(unsigned short *buffer_a,SENSOR Sens);
+int databuffer_sorting(unsigned short *buffer_a, int dout, int rows, int cols_per_dout, int matrix_size_pxls);
+int map_data_buffer_on_pixie(unsigned short *buffer_a,  int rows, int cols);
+// int map_data_buffer_on_pixieIII(unsigned short *buffer_a,SENSOR Sens);
 
 
 void genera_tabella_clock(unsigned short *clocks, unsigned short dim, unsigned short counterwidth);

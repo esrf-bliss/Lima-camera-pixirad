@@ -14,7 +14,7 @@
 #include <bitset> // for printing 16bits  needs to be removed
 #include <iostream>*/
 
-#include <fstream> // for .bin dump  to b eremoved
+#include <fstream> // for .bin dump  to be removed
 
 
 #include<cstdlib>
@@ -55,13 +55,18 @@ public:
     m_nbmodules = nbmodules;
   }
   
+  void setAllocationTable(unsigned short* table){
+    DEB_MEMBER_FUNCT();
+    conversion_table = table;
+  }
+  
   virtual Data process(Data&);
   
 private:
 //   Camera::SdkFrameDim m_sdk_frame_dim;
   SoftBufferCtrlObj* m_BufferCtrlObjReconstructionTask;
   int m_nbmodules;
-  
+  unsigned short * conversion_table;  
 };
 
 Data  _ReconstructionTask::process(Data& src)
@@ -84,7 +89,9 @@ Data  _ReconstructionTask::process(Data& src)
     
   // only a stupid copy for testing
   
+//      DEB_TRACE()<< "Before get Frame Buffer";
      void *source = bufferReconstructionTask.getFrameBufferPtr(frame_number);
+//      DEB_TRACE()<< "After get Frame Buffer";
   
      void *destination = src.buffer->data;
      
@@ -119,21 +126,8 @@ Data  _ReconstructionTask::process(Data& src)
      
      
      
-     // transform the pixirad way to reuse Massimo swap function.
-     SENSOR Sens;
-     Sens.Asic=PII;
-     Sens.cols_per_dout = colsPerDout;
-     Sens.rows  = pixieRows;
-     Sens.matrix_size_pxls = matrix_dim_words;
-     Sens.cols = pixieCols;
-     Sens.dout = douts;     
-     Sens.conv_table.depth = codeDepth;
      
-     
-     Sens.conv_table.ptr=conversion_table_allocation(&Sens);
-     
-     
-     char *sourceAsChar5 = reinterpret_cast<char*>(Sens.conv_table.ptr); 
+     char *sourceAsChar5 = reinterpret_cast<char*>(conversion_table); 
      std::ofstream b_stream5("/tmp/conv_table.bin", std::fstream::out | std::fstream::binary);
      b_stream5.write(sourceAsChar5, 32768*2); //PSTABLE_DEPTH is ushort
      b_stream5.close();
@@ -200,15 +194,15 @@ Data  _ReconstructionTask::process(Data& src)
      */
     
      
-     DEB_TRACE()<< "FPGA (3) Decode + (4) Sort + (5) Map " << DEB_VAR4( Sens.conv_table.ptr, Sens.conv_table.depth,Sens.matrix_size_pxls , matrix_dim_words);
+     DEB_TRACE()<< "FPGA (3) Decode " << DEB_VAR3( conversion_table, matrix_dim_words, codeDepth);
 
     for(int i=0;i<nbModules;i++){  
       
 //      The pseudo-random decoding must be temporarily disabled because the test pattern is natural binary coded. 
-      decode_pixie_data_buffer( Sens.conv_table.ptr,  
-				Sens.conv_table.depth,
+      decode_pixie_data_buffer( conversion_table,  
+				codeDepth,
 				destinationAsInt+i*matrix_dim_words,
-				Sens.matrix_size_pxls  );
+				matrix_dim_words  );
     }
   /*    
      char *sourceAsChar6 = reinterpret_cast<char*>(destinationAsInt); 
@@ -217,11 +211,18 @@ Data  _ReconstructionTask::process(Data& src)
      b_stream6.close();
   */   
       
+     DEB_TRACE()<< "FPGA (4) Sort " << DEB_VAR2( conversion_table, matrix_dim_words);
       
     for(int i=0;i<nbModules;i++){ 
-      databuffer_sorting(destinationAsInt+i*matrix_dim_words,Sens);
+      databuffer_sorting(destinationAsInt+i*matrix_dim_words,
+			 douts,
+			 pixieRows,
+			 colsPerDout,
+			 matrix_dim_words
+			);
     }
       
+     DEB_TRACE()<< "FPGA  (5) Map " << DEB_VAR2( conversion_table, matrix_dim_words);
    /*   
      char *sourceAsChar7 = reinterpret_cast<char*>(destinationAsInt); 
      std::ofstream b_stream7("/tmp/destinationAsInt_3c.bin", std::fstream::out | std::fstream::binary);
@@ -231,9 +232,10 @@ Data  _ReconstructionTask::process(Data& src)
       
       
     for(int i=0;i<nbModules;i++){ 
-      if (Sens.Asic==PII){
-	map_data_buffer_on_pixie(destinationAsInt+i*matrix_dim_words,Sens);
-      }
+	map_data_buffer_on_pixie(destinationAsInt+i*matrix_dim_words,
+	  pixieRows,
+	  pixieCols
+	);
     }
     
    /* 
@@ -286,6 +288,21 @@ void ReconstructionCtrlObj::prepareAcq()
   
   m_task->setBuffer(m_cam.m_pixirad->m_reconstructionBufferCtrlObj);
   m_task->setNbModules(m_cam.m_pixirad->m_nbModules);
+  
+  m_task->setAllocationTable(m_cam.m_pixirad->m_conversion_table);
+  
+     // transform the pixirad way to reuse Massimo swap function.
+//      SENSOR Sens;
+//      Sens.Asic=PII;
+//      Sens.cols_per_dout = colsPerDout;
+//      Sens.rows  = pixieRows;
+//      Sens.matrix_size_pxls = matrix_dim_words;
+//      Sens.cols = pixieCols;
+//      Sens.dout = douts;     
+//      Sens.conv_table.depth = codeDepth;
+//      
+     
+  
 }
 
 //-----------------------------------------------------

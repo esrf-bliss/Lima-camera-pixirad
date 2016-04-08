@@ -80,6 +80,14 @@ void Interface::reset(ResetLevel reset_level) {
 //	m_cam.reset();
 }
 
+void Interface::autocalibration(){
+  DEB_MEMBER_FUNCT();
+  
+  m_cam.autocalibration();
+  
+}
+
+
 void Interface::prepareAcq() {
 	DEB_MEMBER_FUNCT();
 	

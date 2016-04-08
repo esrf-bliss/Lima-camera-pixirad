@@ -132,7 +132,8 @@ public:
         void setFakeMode(Camera::FakeMode fake);
         void getFakeMode(Camera::FakeMode& fake);*/
         
-        
+        void autocalibration();
+	
         void setHighThreshold0(float t);
         void getHighThreshold0(float& t) ;
         void setLowThreshold0(float t);

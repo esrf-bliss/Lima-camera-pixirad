@@ -44,12 +44,11 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION 
 
 
-#include "lima/RegExUtils.h" // Regex LimaStyle
-
 
 // to be removed:
 #include <fstream>
 
+#include "pixiradFpgaTools.h"
 
 
 
@@ -74,6 +73,21 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
 //   setStatusDetector(HwInterface::StatusType::Ready);
+  
+  
+  // Create once and for all the conversion table for the reconstruction task.
+    m_conversion_table=(unsigned short*)calloc(32768, sizeof(unsigned short));    
+    memset(m_conversion_table, 0, 32768*sizeof(unsigned short));    
+    genera_tabella_clock(m_conversion_table, 32768, 15);
+    
+     
+   
+     char *sourceAsChar = reinterpret_cast<char*>(m_conversion_table); 
+     std::ofstream b_stream("/tmp/m_conversion_table.bin", std::fstream::out | std::fstream::binary);
+     b_stream.write(sourceAsChar, 32768*sizeof(unsigned short));
+     b_stream.close();
+     
+  
     
 }
 
@@ -484,10 +498,11 @@ void pixiradDetector::prepareAcq()
     DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
   
   
-  // temporary buffer when the reconstruction task is active for decoding and destriding
+    
   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
+    
   
   
 
@@ -665,7 +680,7 @@ void pixiradDetector::getImages()
 
   int lastDatagramToKeep = 0;
   int amountOfTheLastDatagramToKeep = 0;
-  if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
+  if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
     amountOfTheLastDatagramToKeep= 960;
     m_numberOfUDPPacketsPerImage = 2539; 
@@ -904,6 +919,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
 
 
 int pixiradDetector::update_thresolds_from_energies(){
+  DEB_MEMBER_FUNCT();
   double th_req[4],th_act[4];
   int   th_int[4];
   int Vthmax,i;
@@ -935,7 +951,7 @@ int pixiradDetector::update_thresolds_from_energies(){
     m_sensorConfigHighThreshold0DAC 	= th_int[1];
     m_sensorConfigLowThreshold1DAC      = th_int[2];
     m_sensorConfigHighThreshold1DAC     = th_int[3];
-    m_envConfigHighVoltageBiais		= Vthmax;
+    m_envConfigHighVoltageBiaisMax		= Vthmax;
     /*************/
     return(1);
     
@@ -1033,7 +1049,7 @@ void pixiradDetector::printMissingImageInfo(){
   DEB_TRACE() << "Searching for incomplete images.";
   
   int lastDatagramToKeep = 0;
-  if (m_sensorConfigBuild != "PX8" and m_nbModules == 8){
+  if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
   }
   else{

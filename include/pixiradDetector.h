@@ -212,7 +212,8 @@ public:
 //   int m_envConfigCoolingTemperature = -30; // deg C
   int m_envConfigCoolingTemperature = 15; // deg C
   int m_envConfigCoolingOnOff = 1; //0-off / 1-on
-  int m_envConfigHighVoltageBiais = 400; // Volts
+  int m_envConfigHighVoltageBiais = 0; // Volts
+  int m_envConfigHighVoltageBiaisMax = 2200; // Volts
   int m_envConfigHighVoltageBiaisOnOff = 1; //0-off / 1-on
   
   //  ! Bias_management_Config BiasMode TonDelay ToffDelay RefreshPeriod
@@ -471,6 +472,8 @@ public:
   
   
   int m_UdpPortImages = 9999; // 2223 for PX1
+  short unsigned int * m_conversion_table;
+  
   
 private:
   std::string m_ipAdressDetector = "192.168.0.1";

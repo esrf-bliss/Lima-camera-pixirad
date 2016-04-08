@@ -338,7 +338,13 @@ void lima::Pixirad::Camera::prepareAcq() {
     
 	m_pixirad->update_thresolds_from_energies(); // Will fill in VthMax too.
 	
-	command = string("DAQ:! SET_SENSOR_OPERATINGS "+ to_string(m_pixirad->m_sensorConfigHighThreshold1DAC) +" "+	to_string(m_pixirad->m_sensorConfigLowThreshold1DAC) +" "+	to_string(m_pixirad->m_sensorConfigHighThreshold0DAC) +" "+	to_string(m_pixirad->m_sensorConfigLowThreshold0DAC) +" "+	to_string(m_pixirad->m_envConfigHighVoltageBiais) +" "+	to_string(m_pixirad->m_sensorConfigRefInternalBiais) +" "+ to_string(m_pixirad->m_sensorConfigAusFSInternalBiais) +" "+	m_pixirad->m_sensorConfigDeadTimeFreeMode +" "+	m_pixirad->m_sensorConfigNBI );
+	// If we want more than the max returned by update threshold, we keep the max.
+	int hvbiais = m_pixirad->m_envConfigHighVoltageBiaisMax;
+	if (m_pixirad->m_envConfigHighVoltageBiais <= m_pixirad->m_envConfigHighVoltageBiaisMax){
+	   hvbiais = m_pixirad->m_envConfigHighVoltageBiais;
+	}
+	
+	command = string("DAQ:! SET_SENSOR_OPERATINGS "+ to_string(m_pixirad->m_sensorConfigHighThreshold1DAC) +" "+	to_string(m_pixirad->m_sensorConfigLowThreshold1DAC) +" "+	to_string(m_pixirad->m_sensorConfigHighThreshold0DAC) +" "+	to_string(m_pixirad->m_sensorConfigLowThreshold0DAC) +" "+	to_string(hvbiais) +" "+	to_string(m_pixirad->m_sensorConfigRefInternalBiais) +" "+ to_string(m_pixirad->m_sensorConfigAusFSInternalBiais) +" "+	m_pixirad->m_sensorConfigDeadTimeFreeMode +" "+	m_pixirad->m_sensorConfigNBI );
 	
 	res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);	
 	DEB_TRACE() << DEB_VAR1(res);
@@ -1106,12 +1112,12 @@ void lima::Pixirad::Camera::getCoolingMode(CoolingMode &mode){
 
 void lima::Pixirad::Camera::setHighVoltageBiais(float hv){
 	DEB_MEMBER_FUNCT();    
-        if (hv <=500 && hv>=0){  // TODO: get the real range that can be setup
+        if (hv <=m_pixirad->m_envConfigHighVoltageBiaisMax && hv>=0){  // TODO: get the real range that can be setup
 	  m_pixirad->m_envConfigHighVoltageBiais = hv;
 	  
 	  sendCommandForDetectorCooling();
         }
-        else THROW_HW_ERROR(Error) << "High Voltage Value Impossible";
+        else THROW_HW_ERROR(Error) << "High Voltage Value Impossible" <<DEB_VAR2(m_pixirad->m_envConfigHighVoltageBiaisMax, hv);
         DEB_TRACE() << DEB_VAR2(m_pixirad->m_envConfigHighVoltageBiais,hv);
 }
 
