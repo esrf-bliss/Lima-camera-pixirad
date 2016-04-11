@@ -49,7 +49,7 @@ In soft :
   by default : 131071
   
   Enough for 100 images (as of 11th of april code):
-  net.core.rmem_max = 256217728
+  net.core.rmem_max = 507217408
 
   
 == Kernel tuning ==
@@ -65,6 +65,27 @@ net.core.netdev_max_backlog = 65536
 net.core.somaxconn = 1024
 
 
+
+== Network card driver tuning ==
+ ethtool -g eth1
+Ring parameters for eth1:
+Pre-set maximums:
+RX:		4096
+RX Mini:	0
+RX Jumbo:	0
+TX:		4096
+Current hardware settings:
+RX:		512         <<<<<< =====
+RX Mini:	0
+RX Jumbo:	0
+TX:		512
+
+Increased with :
+ethtool -G eth1 rx 4096
+
+
+
+
 === Possible problems with network ===
 
 
@@ -76,5 +97,19 @@ net.core.somaxconn = 1024
 = Intel pro 1000 on PCI card (82541GI) (debian 7 & 9):
 Intel Corporation 82541GI Gigabit Ethernet Controller
 Intel Corporation 82541PI Gigabit Ethernet Controller (rev 05)
+
+
+
+
+=== Possible problems with Chillers ===
+
+The goal is to setup your temperature settings as to have the peltier full time @ max power.
+
+If the peltier is regulating the temperature, stripes appears in the images.
+
+A easy way is to setup a -50C unreachable goal for the detector and let it stabilise to wathever temperature it can reach based on chiller setting.
+
+chiller is supposed to be set at 16degC. go bellow if humidity is well controlled.
+
 
 
