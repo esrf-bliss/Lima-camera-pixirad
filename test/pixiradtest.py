@@ -61,7 +61,7 @@ debugtrace()
 
 print "\n\n\n\n ======= INIT ======== \n"
 
-debugchucknorris()
+#debugchucknorris()
 
 
 #camera = PixiradAcq.Camera("172.24.8.135", 6666)
@@ -83,7 +83,7 @@ print "\n\n\n\n ======= INTERFACE ======== \n"
 camera_interface = PixiradAcq.Interface(camera)
 
 camera_interface.setNbiMode(camera.SensorConfigNBI_OFF)
-camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeOFF)
+camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeON)
 camera_interface.setRunConfigMode(camera.DATA)
 
 
@@ -94,7 +94,7 @@ camera_interface.setSensorConfigBuild(camera.PX8)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
 
-camera.setCoolingTemperatureSetpoint(-30)
+camera.setCoolingTemperatureSetpoint(-50)
 
 camera.setHighThreshold0(25)
 camera.setLowThreshold0(0)
@@ -102,14 +102,20 @@ camera.setLowThreshold0(0)
 camera.setLowThreshold0(10)
 camera.setHighThreshold0(60)
 camera.setLowThreshold1(10)
-camera.setHighThreshold1(65)
+camera.setHighThreshold1(60)
 
 camera.setHighVoltageBiais(2100)
 camera.setHVBiasModePower(1)
 
 
-#camera_interface.setTrsfMode(camera.MOD)
-camera.setTrsfMode(camera.UNMOD)
+camera.setHighVoltageDelayBeforeOn(3)
+
+camera.setHVRefreshPeriod(1);
+#camera.setHVBiasModePower(camera.STDHV);
+
+
+camera_interface.setTrsfMode(camera.UNMOD)
+#camera.setTrsfMode(camera.UNMOD)
 
 #beforePrepare = time.time()
 
@@ -468,8 +474,8 @@ class MyCbk(Core.CtControl.ImageStatusCallback) :
 	    #print 'ic', type(ic), ic.shape
 
 
-Cbk = MyCbk()
-control.registerImageStatusCallback(Cbk)
+#Cbk = MyCbk()
+#control.registerImageStatusCallback(Cbk)
 
 
 def plot():

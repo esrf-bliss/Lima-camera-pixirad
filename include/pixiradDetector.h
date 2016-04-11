@@ -303,7 +303,8 @@ public:
   
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
-  int m_nbOfFrameInReconstructionBuffer = 32;
+//   int m_nbOfFrameInReconstructionBuffer = 32;
+  int m_nbOfFrameInReconstructionBuffer = 128;
   
   
   

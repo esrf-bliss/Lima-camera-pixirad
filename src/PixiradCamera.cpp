@@ -1057,7 +1057,7 @@ void lima::Pixirad::Camera::getRunConfigMode(RunConfigMode &mode){
 
 void lima::Pixirad::Camera::setCoolingTemperatureSetpoint(float t){
 	DEB_MEMBER_FUNCT();    
-        if (t <=40 && t>=-30){  // TODO: get the real range that can be setup
+        if (t <=30 && t>=-50){  // TODO: get the real range that can be setup
             m_pixirad->m_envConfigCoolingTemperature = t;
 	    
 	    sendCommandForDetectorCooling();
