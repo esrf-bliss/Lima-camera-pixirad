@@ -605,7 +605,7 @@ void pixiradDetector::getImages()
   
   
   
-  
+ 
   
   DEB_TRACE() << "Modification of socket SO_RCVBUF size";
   int rcvBufferSize;
@@ -614,13 +614,14 @@ void pixiradDetector::getImages()
   DEB_TRACE() << "Modification of socket SO_RCVBUF size. Initial socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
   
   
-//   socklen_t czm = sizeof(int);
+  //  net.core.rmem_max = 507217408 (pages of 4kbytes)
+  // kernel will x2 this. 
+  int kernelbuffersize =250000000 ;  // max for kernel must be twice.
   
-  if (setsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &MAXSIZEFORSOCKETBUFFER, sockOptSize) == -1) {
+  if (setsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &kernelbuffersize, sockOptSize) == -1) {
     DEB_ERROR() << "UDP Socket buffer size SO_RCVBUF increase failed, change /etc/sysctl.conf if you experience problems.";
   }
-  
-  getsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &rcvBufferSize, &sockOptSize);
+   getsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &rcvBufferSize, &sockOptSize);
   DEB_TRACE() << "Final socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
   
   

@@ -38,6 +38,20 @@ In soft :
   ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);
   if (ret != 0) { std::cout << "Check /etc/security/limits.conf " << std::endl; }
 
+  
+ == UDP debug tips ==
+  If you suspect drop of UDP datagram due to a too small kernel buffer (the plugin is too slow to treat the buffer, it filled and drop frames)
+  cat /proc/net/udp
+  
+  And check the drop column.
+  
+  cat /proc/sys/net/core/rmem_max  tells you the buffer size 
+  by default : 131071
+  
+  Enough for 100 images (as of 11th of april code):
+  net.core.rmem_max = 256217728
+
+  
 == Kernel tuning ==
 man udp
 

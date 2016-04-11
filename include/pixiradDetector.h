@@ -153,7 +153,7 @@ public:
   
     
   
-  int MAXSIZEFORSOCKETBUFFER = 256217728; // 4000000; 256217728 
+  int MAXSIZEFORSOCKETBUFFER = 2562177280; // 4000000; 256217728  25621772800
   bool m_flagAcquisitionRunning;
   
   int m_acq_frame_nb; // nos of frames acquired
