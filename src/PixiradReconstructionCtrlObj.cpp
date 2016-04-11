@@ -126,12 +126,12 @@ Data  _ReconstructionTask::process(Data& src)
      
      
      
-     
+     /*
      char *sourceAsChar5 = reinterpret_cast<char*>(conversion_table); 
      std::ofstream b_stream5("/tmp/conv_table.bin", std::fstream::out | std::fstream::binary);
      b_stream5.write(sourceAsChar5, 32768*2); //PSTABLE_DEPTH is ushort
      b_stream5.close();
-     
+     */
      
      //ushort temporaryBufferLocal[8*476*512*15]; // TODO: change for one module. // This is local_buffer_ptr
      unsigned short *temporaryBufferLocal;
@@ -139,11 +139,11 @@ Data  _ReconstructionTask::process(Data& src)
       
 //       memset(&temporaryBufferLocal, '0', 2*nbModules*pixieRows*pixieCols); // not useful as we are doing calloc.
      
-     
+     /*
      char *sourceAsChar = reinterpret_cast<char*>(source); 
      std::ofstream b_stream("/tmp/source_1.bin", std::fstream::out | std::fstream::binary);
      b_stream.write(sourceAsChar, pixieRows*pixieCols*nbModules*2);
-     b_stream.close();
+     b_stream.close();*/
      
      
      // First step bytes swapping      
@@ -161,12 +161,12 @@ Data  _ReconstructionTask::process(Data& src)
      
      
      
-     
+     /*
      char *sourceAsChar2 = reinterpret_cast<char*>(temporaryBufferLocal); 
      std::ofstream b_stream2("/tmp/tempBufferLocal_2.bin", std::fstream::out | std::fstream::binary);
      b_stream2.write(sourceAsChar2, pixieRows*pixieCols*nbModules*2);
      b_stream2.close();
-     
+     */
      
      
      

@@ -165,7 +165,7 @@ def newsave(newsaving, basename):
   newsaving.setParameters(pars)
 
 
-newsave(saving , time.strftime('test_stagiaire_%Y_%m_%d-%H_%M_%S'))
+#newsave(saving , time.strftime('test_stagiaire_%Y_%m_%d-%H_%M_%S'))
 
 
 def externalTrigger():

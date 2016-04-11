@@ -548,13 +548,20 @@ void pixiradDetector::getImages()
   // Buffer manager for the reconstruction (the one that gives the pointer)
   StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
   
+  /*
+  //But to speed up we prepare all pointer in advance
+  void* getFrameBufferPtrInAdvance[m_nbFramesAcq];
   
+  for (int i=0; i< m_nbFramesAcq; i++){
+	getFrameBufferPtrInAdvance[i] = reconstructionBufferMgr.getFrameBufferPtr(i);
+  }
+  */
   //////////////////// REAL TIME  /////////////////////////////
   // Going to a real time fifo mode to be sure to not loose any udp packets.
   pthread_t this_thread = pthread_self(); 
   struct sched_param params;     
 
-  params.sched_priority = 5; 
+  params.sched_priority = 99; 
   
   DEB_TRACE() << "Trying to set thread realtime prio " << DEB_VAR1(params.sched_priority);
   // Attempt to set thread real-time priority to the SCHED_FIFO policy     
@@ -754,8 +761,8 @@ void pixiradDetector::getImages()
 	  }
 	}
 	
-	
-	void *voidimageptr =reconstructionBufferMgr.getFrameBufferPtr(slotId);
+	void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
+// 	void *voidimageptr = getFrameBufferPtrInAdvance[slotId];
 	
 	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
 	
@@ -788,17 +795,17 @@ void pixiradDetector::getImages()
 	  
 	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
 	  
-	  bool result = finalBufferMgr.newFrameReady(frame_info); 
+	  finalBufferMgr.newFrameReady(frame_info); 
 	  
-	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(result,  m_numberOfUDPPacketsPerImage*m_nbFramesAcq, packet, frame_info);
+	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
 	  
 	  fireLima = false;
 	  
-		// To be removed :
-	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
-	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
-	  b_stream4.write(sourceAsChar4, 512*476*1*2);
-	  b_stream4.close();
+// 		// To be removed :
+// 	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
+// 	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
+// 	  b_stream4.write(sourceAsChar4, 512*476*1*2);
+// 	  b_stream4.close();
      
 	  
 	}
