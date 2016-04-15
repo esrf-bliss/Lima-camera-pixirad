@@ -458,6 +458,12 @@ public:
   
   void threadWhoReceiveImagesFromCameraThroughUDP();
   
+  
+    void recvLoopForImageUDPStream();
+    void dispatchLoopForUDPStreamToIndividualImage();
+    
+    
+  
   int sendCommand(std::string command, char commandAnswerFromDetector[MAX_MSG_STR_LENGTH], bool waitForAnswer);
   
   void getImages();
@@ -482,7 +488,13 @@ private:
   int m_weatherUdpPort = 2224;
   int m_UdpPort = 4444;
   
-  std::thread m_imageThread;
+  unsigned char *commonBuffer;
+  
+  std::mutex m_mutexPositionMessyBuffer;
+  int positionWithinMessyBuffer  = 0;  
+  std::thread m_imageThread; // old school way (one thread)
+  std::thread m_imageThreadRecvLoop;
+  std::thread m_imageThreadDispatchLoop;
   std::thread m_boxHumidityTempMonitor;
   
     //   pixiradDetector();

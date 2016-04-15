@@ -433,23 +433,6 @@ void pixiradDetector::boxHumidityTempMonitor(){
 
 
 
-void pixiradDetector::getImagesInAThread()
-{
-  DEB_MEMBER_FUNCT();
-  
-  if(m_imageThread.joinable()){
-    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
-    m_imageThread.detach();
-    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThread.get_id());
-  }
-  
-  DEB_TRACE() << "Creation of an independant thread for image reception." ;
-  m_imageThread =  std::thread(&pixiradDetector::getImages, this);
-  
-  
-}
-
-
 void pixiradDetector::prepareAcq()
 {
   DEB_MEMBER_FUNCT();
@@ -735,20 +718,11 @@ void pixiradDetector::getImages()
 	while (iDontKnowMyPlace) {
 	  
 	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
-	    // first round 
-	    // fill image here
-	    iDontKnowMyPlace = false; 
-	    //printf("image %i packet %i \n", slotId, packet_id);	
-	    
-//     	  DEB_TRACE() << "recv -2: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
-	    
+	    iDontKnowMyPlace = false; 	    
 	    acknowledgator[slotId] = acknowledgator[slotId] +1;
-	    
 	  }
 	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
 	    
-	    // fire lima !	
-//     	  DEB_TRACE() << "recv -1: " <<DEB_VAR3(slotId, packet_id, acknowledgator[slotId]);
 	    DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
 	    
 	    acknowledgator[slotId] = acknowledgator[slotId] +1;
@@ -762,19 +736,11 @@ void pixiradDetector::getImages()
 	}
 	
 	void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
-// 	void *voidimageptr = getFrameBufferPtrInAdvance[slotId];
 	
 	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
 	
-	// image =16b  =>/2
-  //       int positionOfDatagramInImage8b =  packet_id * 1440; //
+	
 	int positionOfDatagramInImage8b =  packet_id * 1440; // 
-	
-	
-	
-	
-  //       DEB_TRACE()<<"MEMCOPY BEFORE >> "<<DEB_VAR4(image8b[positionOfDatagramInImage8b],positionOfDatagramInImage8b,buf[4], realpacketsize);
-	//       memcpy(&image8b[positionOfDatagramInImage8b], &buf[4], realpacketsize-8);
 	
 	if (packet_id == lastDatagramToKeep){
 	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
@@ -782,10 +748,6 @@ void pixiradDetector::getImages()
 	else {
 	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
 	}
-  //       DEB_TRACE()<<"MEMCOPY AFTER <<"<<DEB_VAR4(image8b[positionOfDatagramInImage8b],positionOfDatagramInImage8b,buf[4], realpacketsize);
-	
-	// TODO: do something for tha last datagram, which will have only a part of the buffer related to the image.
-  
 	
 	if(fireLima)
 	{   
@@ -829,6 +791,375 @@ m_mutexUDPImage.unlock();
 }
 
 
+
+
+
+
+
+
+void pixiradDetector::getImagesInAThread()
+{
+  DEB_MEMBER_FUNCT();
+  
+  
+  
+  // All in one thread (slow but reliable)
+  /*
+  if(m_imageThread.joinable()){
+    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
+    m_imageThread.detach();
+    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThread.get_id());
+  }
+  
+  DEB_TRACE() << "Creation of an independant thread for image reception." ;
+  m_imageThread =  std::thread(&pixiradDetector::getImages, this);
+  */
+  
+  
+  
+  // Two threads:
+  // - one which will receive as fast as possible all the udp packets. 
+  // - one which will dispatch all packets per image and in the good order for the reconstruction task.
+  //   this one will also pass the image in a lima buffer and the reconstruction tasks will be threaded.
+  
+  if(m_imageThreadRecvLoop.joinable()){
+    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThreadRecvLoop.get_id());
+    m_imageThreadRecvLoop.detach();
+    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThreadRecvLoop.get_id());
+  }
+  else{
+      
+    DEB_TRACE() << "Creation of two independant threads, one for udp reception and one for udp dispatch in individual images." ;
+    m_imageThreadRecvLoop =  std::thread(&pixiradDetector::recvLoopForImageUDPStream, this);
+  
+  }
+  
+  if(m_imageThreadDispatchLoop.joinable()){
+    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThreadDispatchLoop.get_id());
+    m_imageThreadDispatchLoop.detach();
+    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThreadDispatchLoop.get_id());
+  }
+  else{
+      
+    DEB_TRACE() << "Creation of two independant threads, one for udp reception and one for udp dispatch in individual images." ;
+    m_imageThreadDispatchLoop =  std::thread(&pixiradDetector::dispatchLoopForUDPStreamToIndividualImage, this);
+  
+  }
+  
+  
+  
+  
+  
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+// First attempt to split the recv and the dispatch in two methods (originally both were inside getImages() )
+
+void pixiradDetector::recvLoopForImageUDPStream(){
+  DEB_MEMBER_FUNCT();
+ 
+  //////////////////// REAL TIME  /////////////////////////////
+  // Going to a real time fifo mode to be sure to not loose any udp packets.
+  pthread_t this_thread = pthread_self(); 
+  struct sched_param params;     
+
+  params.sched_priority = 99; 
+  
+  DEB_TRACE() << "Trying to set thread realtime prio " << DEB_VAR1(params.sched_priority);
+  // Attempt to set thread real-time priority to the SCHED_FIFO policy     
+  int ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);     
+  if (ret != 0) {         
+    DEB_TRACE() << "Sadly I am Unsuccessful in setting a higher thread realtime priority. Add yourself to /etc/security/limits.conf , you deserve it" ;
+  }
+  
+  
+  std::unique_lock<std::mutex> uniqLock(m_mutexUDPImage);
+  
+  
+  /////////////////////  SOCKET UDP /////////////////////////////////
+  DEB_TRACE() << "UDP Socket Creation";
+  struct sockaddr_in sockaddrInUDP;
+  int socketUDPImage;
+  
+  
+  
+  //////////////////  Receiving //////////////
+  if(m_sensorConfigBuild == "PX8" ){ m_UdpPortImages = 9999; }  
+  else { m_UdpPortImages = 2223; }
+  
+  
+  memset((unsigned char *) &sockaddrInUDP, 0, sizeof(sockaddrInUDP));
+  
+  
+  
+  if ( (socketUDPImage=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+  {
+    DEB_ERROR() << "UDP Socket Creation Failed";
+    //TODO: Set Error to lima 
+  }
+  
+  
+  sockaddrInUDP.sin_family = AF_INET;
+  sockaddrInUDP.sin_port = htons(m_UdpPortImages);
+  
+  
+  bind(socketUDPImage, (struct sockaddr *) &sockaddrInUDP, sizeof(sockaddrInUDP));
+  
+  if (inet_aton("192.168.0.255" , &sockaddrInUDP.sin_addr) == 0) 
+  {
+    DEB_ERROR() << "inet_aton() failed" ;
+  }
+  
+  
+  
+ 
+  
+  DEB_TRACE() << "Modification of socket SO_RCVBUF size";
+  int rcvBufferSize;
+  socklen_t sockOptSize = sizeof(rcvBufferSize);
+  getsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &rcvBufferSize, &sockOptSize);
+  DEB_TRACE() << "Modification of socket SO_RCVBUF size. Initial socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
+  
+  
+  //  net.core.rmem_max = 507217408 (pages of 4kbytes)
+  // kernel will x2 this. 
+  int kernelbuffersize =250000000 ;  // max for kernel must be twice.
+  
+  if (setsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &kernelbuffersize, sockOptSize) == -1) {
+    DEB_ERROR() << "UDP Socket buffer size SO_RCVBUF increase failed, change /etc/sysctl.conf if you experience problems.";
+  }
+   getsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &rcvBufferSize, &sockOptSize);
+  DEB_TRACE() << "Final socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
+  
+  
+  
+  
+  int lastDatagramToKeep = 0;
+  int amountOfTheLastDatagramToKeep = 0;
+  if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
+    lastDatagramToKeep = 2538;
+    amountOfTheLastDatagramToKeep= 960;
+    m_numberOfUDPPacketsPerImage = 2539; 
+  }
+  else{
+    lastDatagramToKeep = 317;
+    amountOfTheLastDatagramToKeep= 480;   
+    m_numberOfUDPPacketsPerImage = 360; 
+  }
+  
+  
+  // So with this thread we will take all our upd packets as fast as possible and dig them in "real" memory instead of being late with recv and overflowing the driver memory then the kernel memory and loosing packets.
+  // We threrefore need to have a vast amount of memory :
+  //   m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq    (in char size)
+  
+  m_mutexPositionMessyBuffer.lock();	
+    positionWithinMessyBuffer = 0;
+  m_mutexPositionMessyBuffer.unlock();
+
+   
+  unsigned char justOnePacket[1448];
+  unsigned char messyBuffer[ m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq ];
+  commonBuffer =messyBuffer;
+  
+  
+  DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_UdpPortImages ) ;
+  for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
+    if(not m_stopAcquisition){
+    
+      int realpacketsize = recvfrom(socketUDPImage, (char*)justOnePacket, 1448,  0, NULL, 0);
+//    recvfrom(socketUDPImage, (char*)buf, 4,  0, NULL, 0);
+     
+      if (realpacketsize != 1448){DEB_ERROR() << "A packet has an unexpected size, you should be worried about it." <<DEB_VAR1(realpacketsize); packet--; }
+      else if(realpacketsize == -1){DEB_ERROR() << "UDP error, some datagrams has been lost in the wild world of copper cables."<<DEB_VAR1(packet);packet--;} 
+      else{ // was reconstruction
+	    // set the place to point for the dispatch method thread.
+	memcpy(&messyBuffer[packet*1448], justOnePacket, 1448);
+	
+	m_mutexPositionMessyBuffer.lock();	
+	  positionWithinMessyBuffer++;	
+	  DEB_TRACE()<< "Got one packet "<<DEB_VAR1(positionWithinMessyBuffer); // Comment this out after debug.
+	m_mutexPositionMessyBuffer.unlock();
+
+      }
+    }
+  }
+  
+  m_mutexUDPImage.unlock();
+
+  close(socketUDPImage);
+ 
+  
+  
+}
+
+
+void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
+  DEB_MEMBER_FUNCT();
+ 
+  m_allImagesReceived = false;
+  
+  
+  // Buffer manager for the reconstruction (the one that gives the pointer)
+  StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+  
+  
+  
+  unsigned short acknowledgator[m_nbFramesAcq];
+  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
+  m_acknowledgatorPointer = & acknowledgator[0];
+  
+  
+  unsigned short   slotId=0;
+  unsigned short   packet_id;
+  unsigned short   packet_id_1;
+  unsigned short   packet_id_2;
+  unsigned short   packet_id_18;
+  unsigned short   packetTag =0;
+  
+  
+  StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
+  
+  m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj();
+  
+  
+  setStatusDetector(HwInterface::StatusType::Readout);
+  
+  m_stopAcquisition = false;
+  
+  int lastDatagramToKeep = 0;
+  int amountOfTheLastDatagramToKeep = 0;
+  if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
+    lastDatagramToKeep = 2538;
+    amountOfTheLastDatagramToKeep= 960;
+    m_numberOfUDPPacketsPerImage = 2539; 
+  }
+  else{
+    lastDatagramToKeep = 317;
+    amountOfTheLastDatagramToKeep= 480;   
+    m_numberOfUDPPacketsPerImage = 360; 
+  }
+  
+  int localCopyOfPositionWithinMessyBuffer = -1;
+  
+  unsigned char *buf;
+  
+   for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
+     
+	m_mutexPositionMessyBuffer.lock();	
+	localCopyOfPositionWithinMessyBuffer = positionWithinMessyBuffer;	
+	m_mutexPositionMessyBuffer.unlock();
+	
+	  DEB_TRACE()<< "Dispatch loop "<<DEB_VAR2(localCopyOfPositionWithinMessyBuffer, packet); // Comment this out after debug.
+	  
+     
+	  buf = &commonBuffer[localCopyOfPositionWithinMessyBuffer*1448];
+  
+      packetTag=*buf;
+      
+      //TODO: Autocal
+      if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
+      
+      // SlotId is the image frame number in pixirad manual
+      // packet id is the part of the image that is in the received udp datagram
+      
+      slotId=buf[1];
+      packet_id_1=buf[2];
+      packet_id_2=buf[3];
+      
+      packet_id_18=packet_id_1<<8;
+      packet_id = packet_id_18 + packet_id_2;
+      
+      if (packet_id <= lastDatagramToKeep){
+	
+	bool iDontKnowMyPlace = true;
+	bool fireLima = false;
+	
+	while (iDontKnowMyPlace) {
+	  
+	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
+	    iDontKnowMyPlace = false; 	    
+	    acknowledgator[slotId] = acknowledgator[slotId] +1;
+	  }
+	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+	    
+	    DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
+	    
+	    acknowledgator[slotId] = acknowledgator[slotId] +1;
+	    iDontKnowMyPlace = false; 
+	    fireLima = true;
+	  }
+	  if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
+	    slotId = slotId + 256;
+	    iDontKnowMyPlace = true; // Still true, could be more than 512
+	  }
+	}
+	
+	void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
+	
+	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
+	
+	
+	int positionOfDatagramInImage8b =  packet_id * 1440; // 
+	
+	if (packet_id == lastDatagramToKeep){
+	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
+	}
+	else {
+	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
+	}
+	
+	if(fireLima)
+	{   
+	  // Build a frame info for Lima.
+	  HwFrameInfoType frame_info;
+	  frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
+	  
+	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
+	  
+	  finalBufferMgr.newFrameReady(frame_info); 
+	  
+	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
+	  
+	  fireLima = false;
+	  
+// 		// To be removed :
+// 	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
+// 	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
+// 	  b_stream4.write(sourceAsChar4, 512*476*1*2);
+// 	  b_stream4.close();
+     
+	  
+	}
+      }// discard too much datagrams
+      
+   }
+  
+
+//   free(acknowledgator);
+//   // Banzai
+//   m_imageThread.detach();
+m_allImagesReceived = true;
+
+  
+  // If we know where toi point.
+  
+  
+  
+  
+  
+  
+  
+}
 
 
 int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDetector[MAX_MSG_STR_LENGTH], bool waitanswer){
