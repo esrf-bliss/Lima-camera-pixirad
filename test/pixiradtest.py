@@ -89,8 +89,8 @@ camera_interface.setRunConfigMode(camera.DATA)
 
 camera_interface.setHybridMode(camera.CDTE)
 
-camera_interface.setSensorConfigBuild(camera.PX1)
-#camera_interface.setSensorConfigBuild(camera.PX8)
+#camera_interface.setSensorConfigBuild(camera.PX1)
+camera_interface.setSensorConfigBuild(camera.PX8)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
 

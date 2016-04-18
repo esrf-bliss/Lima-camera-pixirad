@@ -804,7 +804,7 @@ void pixiradDetector::getImagesInAThread()
   
   
   // All in one thread (slow but reliable)
-  /*
+  
   if(m_imageThread.joinable()){
     DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
     m_imageThread.detach();
@@ -813,9 +813,9 @@ void pixiradDetector::getImagesInAThread()
   
   DEB_TRACE() << "Creation of an independant thread for image reception." ;
   m_imageThread =  std::thread(&pixiradDetector::getImages, this);
-  */
   
   
+  /*
   
   // Two threads:
   // - one which will receive as fast as possible all the udp packets. 
@@ -846,7 +846,7 @@ void pixiradDetector::getImagesInAThread()
   
   }
   
-  
+  */
   
   
   
@@ -1052,97 +1052,105 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
   int localCopyOfPositionWithinMessyBuffer = -1;
   
   unsigned char *buf;
-  
-   for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
+  int packet = 0;
+  bool finished = false;
+   while (packet <= (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq and !finished ){
      
 	m_mutexPositionMessyBuffer.lock();	
 	localCopyOfPositionWithinMessyBuffer = positionWithinMessyBuffer;	
 	m_mutexPositionMessyBuffer.unlock();
-	
-	  DEB_TRACE()<< "Dispatch loop "<<DEB_VAR2(localCopyOfPositionWithinMessyBuffer, packet); // Comment this out after debug.
-	  
-     
-	  buf = &commonBuffer[localCopyOfPositionWithinMessyBuffer*1448];
-  
-      packetTag=*buf;
-      
-      //TODO: Autocal
-      if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
-      
-      // SlotId is the image frame number in pixirad manual
-      // packet id is the part of the image that is in the received udp datagram
-      
-      slotId=buf[1];
-      packet_id_1=buf[2];
-      packet_id_2=buf[3];
-      
-      packet_id_18=packet_id_1<<8;
-      packet_id = packet_id_18 + packet_id_2;
-      
-      if (packet_id <= lastDatagramToKeep){
-	
-	bool iDontKnowMyPlace = true;
-	bool fireLima = false;
-	
-	while (iDontKnowMyPlace) {
-	  
-	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
-	    iDontKnowMyPlace = false; 	    
-	    acknowledgator[slotId] = acknowledgator[slotId] +1;
-	  }
-	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+	  if (packet<=localCopyOfPositionWithinMessyBuffer){
 	    
-	    DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
+	
+	  DEB_TRACE()<< "Dispatch loop dispatching"<<DEB_VAR2(localCopyOfPositionWithinMessyBuffer, packet); // Comment this out after debug.
+	  
+		      
+	      
+		    buf = &commonBuffer[localCopyOfPositionWithinMessyBuffer*1448+4];
 	    
-	    acknowledgator[slotId] = acknowledgator[slotId] +1;
-	    iDontKnowMyPlace = false; 
-	    fireLima = true;
+		packetTag=*buf;
+		
+		//TODO: Autocal
+		if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
+		
+		// SlotId is the image frame number in pixirad manual
+		// packet id is the part of the image that is in the received udp datagram
+		
+		slotId=buf[1];
+		packet_id_1=buf[2];
+		packet_id_2=buf[3];
+		
+		packet_id_18=packet_id_1<<8;
+		packet_id = packet_id_18 + packet_id_2;
+		
+		if (packet_id <= lastDatagramToKeep){
+		  
+		  bool iDontKnowMyPlace = true;
+		  bool fireLima = false;
+		  
+		  while (iDontKnowMyPlace) {
+		    
+		    if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
+		      iDontKnowMyPlace = false; 	    
+		      acknowledgator[slotId] = acknowledgator[slotId] +1;
+		    }
+		    else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+		      
+		      DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
+		      
+		      acknowledgator[slotId] = acknowledgator[slotId] +1;
+		      iDontKnowMyPlace = false; 
+		      fireLima = true;
+		    }
+		    if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
+		      slotId = slotId + 256;
+		      iDontKnowMyPlace = true; // Still true, could be more than 512
+		    }
+		  }
+		  
+		  void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
+		  
+		  uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
+		  
+		  
+		  int positionOfDatagramInImage8b =  packet_id * 1440; // 
+		  
+		  if (packet_id == lastDatagramToKeep){
+		    memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
+		  }
+		  else {
+		    memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
+		  }
+		  
+		  if(fireLima)
+		  {   
+		    // Build a frame info for Lima.
+		    HwFrameInfoType frame_info;
+		    frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
+		    
+		    DEB_TRACE() << DEB_VAR2(frame_info, slotId);
+		    
+		    finalBufferMgr.newFrameReady(frame_info); 
+		    
+		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
+		    
+		    fireLima = false;
+		    
+	  // 		// To be removed :
+	  // 	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
+	  // 	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
+	  // 	  b_stream4.write(sourceAsChar4, 512*476*1*2);
+	  // 	  b_stream4.close();
+	      
+		    
+		  }
+		  
+	if(packet >= (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq ){finished=true;}
+	packet++;    
+		}// discard too much datagrams
 	  }
-	  if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
-	    slotId = slotId + 256;
-	    iDontKnowMyPlace = true; // Still true, could be more than 512
-	  }
-	}
-	
-	void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
-	
-	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
-	
-	
-	int positionOfDatagramInImage8b =  packet_id * 1440; // 
-	
-	if (packet_id == lastDatagramToKeep){
-	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
-	}
-	else {
-	  memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
-	}
-	
-	if(fireLima)
-	{   
-	  // Build a frame info for Lima.
-	  HwFrameInfoType frame_info;
-	  frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
-	  
-	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
-	  
-	  finalBufferMgr.newFrameReady(frame_info); 
-	  
-	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
-	  
-	  fireLima = false;
-	  
-// 		// To be removed :
-// 	  char *sourceAsChar4 = reinterpret_cast<char*>(image8b); 
-// 	  std::ofstream b_stream4("/tmp/before_limabuf_0.bin", std::fstream::out | std::fstream::binary);
-// 	  b_stream4.write(sourceAsChar4, 512*476*1*2);
-// 	  b_stream4.close();
      
-	  
-	}
-      }// discard too much datagrams
-      
-   }
+  }
   
 
 //   free(acknowledgator);
