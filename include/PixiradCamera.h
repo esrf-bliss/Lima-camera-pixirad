@@ -135,7 +135,7 @@ public:
         
 
 	// Buffer control object
-	SoftBufferCtrlObj m_bufferCtrlObj;
+  	SoftBufferCtrlObj m_bufferCtrlObj ;
 
         
         int res;

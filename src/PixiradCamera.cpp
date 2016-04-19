@@ -56,8 +56,9 @@ lima::Pixirad::Camera::Camera(std::string hostname, int tcpPort) :
    
 	DEB_TRACE() << "Pixirad attemping to create detector object for : " << DEB_VAR2(m_hostname, m_tcpPort);
     
-   m_bufferCtrlObj = new SoftBufferCtrlObj(); // Already in prepare
 //        pixiradDetector *m_pixirad = new pixiradDetector(m_hostname, m_tcpPort);
+//   	m_bufferCtrlObj = new SoftBufferCtrlObj(); 
+	
         m_pixirad = new pixiradDetector(m_hostname, m_tcpPort, m_bufferCtrlObj);
 	
 	init();
@@ -479,7 +480,8 @@ void lima::Pixirad::Camera::startAcq() {
     DEB_MEMBER_FUNCT();
     
     
-    StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
+     StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
+    
     m_pixirad->getImagesInAThread();
     
 	
@@ -490,9 +492,13 @@ void lima::Pixirad::Camera::startAcq() {
 	int res = m_pixirad->sendCommand(command,commandAnswerFromDetector, true);
 	
 	DEB_TRACE() << DEB_VAR1(res); 
+	// For timestamping the starting time
+		  buffer_mgr.setStartTimestamp(Timestamp::now());
+			      
 	
-        // For timestamping the starting time
-	buffer_mgr.setStartTimestamp(Timestamp::now());
+		  
+		  /// If using the two threads version
+// 	m_pixirad->dispatchLoopForUDPStreamToIndividualImage();
 	
 	 
 }

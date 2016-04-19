@@ -297,11 +297,13 @@ public:
   // Buffer for Lima
   //    BufferCtrlMgr m_buffer;
   //    HwBufferCtrlObj*  m_bufferCtrlObj;
-  StdBufferCbMgr* buffer_mgr;
-  StdBufferCbMgr* finalBufferMgr ;
   
-//   SoftBufferCtrlObj& m_bufferCtrlObj;
-  SoftBufferCtrlObj* m_bufferCtrlObj;
+  
+  StdBufferCbMgr* buffer_mgr;
+//   StdBufferCbMgr* finalBufferMgr ;
+  
+   SoftBufferCtrlObj& m_bufferCtrlObj;
+//   SoftBufferCtrlObj* m_bufferCtrlObj;
   
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
@@ -481,21 +483,12 @@ public:
   
   void printMissingImageInfo();
   
-  bool m_stopAcquisition;
+  bool m_stopAcquisition = false;
   void stopAcq();
   
   
   int m_UdpPortImages = 9999; // 2223 for PX1
   short unsigned int * m_conversion_table;
-  
-  
-private:
-  std::string m_ipAdressDetector = "192.168.0.1";
-  int m_TcpPort = 2222;
-  int m_weatherUdpPort = 2224;
-  int m_UdpPort = 4444;
-  
-//   unsigned char *commonBuffer;
   
   unsigned char * messyBuffer;
   
@@ -506,6 +499,15 @@ private:
   std::thread m_imageThreadRecvLoop;
   std::thread m_imageThreadDispatchLoop;
   std::thread m_boxHumidityTempMonitor;
+  
+private:
+  std::string m_ipAdressDetector = "192.168.0.1";
+  int m_TcpPort = 2222;
+  int m_weatherUdpPort = 2224;
+  int m_UdpPort = 4444;
+  
+//   unsigned char *commonBuffer;
+  
   
     //   pixiradDetector();
 /*  
