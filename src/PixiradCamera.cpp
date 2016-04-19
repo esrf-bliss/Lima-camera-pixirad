@@ -56,6 +56,7 @@ lima::Pixirad::Camera::Camera(std::string hostname, int tcpPort) :
    
 	DEB_TRACE() << "Pixirad attemping to create detector object for : " << DEB_VAR2(m_hostname, m_tcpPort);
     
+   m_bufferCtrlObj = new SoftBufferCtrlObj(); // Already in prepare
 //        pixiradDetector *m_pixirad = new pixiradDetector(m_hostname, m_tcpPort);
         m_pixirad = new pixiradDetector(m_hostname, m_tcpPort, m_bufferCtrlObj);
 	

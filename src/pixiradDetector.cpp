@@ -59,7 +59,8 @@ using namespace lima::Pixirad;
 
 
 
-pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, SoftBufferCtrlObj& buffer): m_bufferCtrlObj(buffer), m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) {
+ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, SoftBufferCtrlObj& buffer): m_bufferCtrlObj(buffer), m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) {
+//  pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) {
   
   DEB_CONSTRUCTOR();
   DEB_TRACE() << "Starting threads for socket handling";
@@ -68,7 +69,7 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
   
   setStatusDetector(HwInterface::StatusType::Config);
   
-  
+ 
   // TODO: COntinue testing regexp on this thread :
   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
@@ -95,6 +96,8 @@ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, Soft
 pixiradDetector::~pixiradDetector(){
   DEB_DESTRUCTOR();
   stopAcq();
+  delete m_bufferCtrlObj;
+  
 }
 
 
@@ -482,7 +485,7 @@ void pixiradDetector::prepareAcq()
   
   
     
-  m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
+//   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
     
@@ -630,9 +633,13 @@ void pixiradDetector::getImages()
   */
   
   
-  unsigned short acknowledgator[m_nbFramesAcq];
-  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
-  m_acknowledgatorPointer = & acknowledgator[0];
+//   unsigned short acknowledgator[m_nbFramesAcq];
+acknowledgator = (unsigned short*) realloc(acknowledgator, m_nbFramesAcq * sizeof(unsigned short));
+if (acknowledgator == NULL){
+  acknowledgator = (unsigned short*) calloc(m_nbFramesAcq, sizeof(unsigned short));
+}
+//   memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
+//   m_acknowledgatorPointer = & acknowledgator[0];
   
   
   unsigned short   slotId=0;
@@ -715,7 +722,7 @@ void pixiradDetector::getImages()
 	bool iDontKnowMyPlace = true;
 	bool fireLima = false;
 	
-	while (iDontKnowMyPlace) {
+	while (iDontKnowMyPlace and slotId<=m_nbFramesAcq) {
 	  
 	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
 	    iDontKnowMyPlace = false; 	    
@@ -803,6 +810,8 @@ void pixiradDetector::getImagesInAThread()
   
   
   
+  /*
+  
   // All in one thread (slow but reliable)
   
   if(m_imageThread.joinable()){
@@ -815,7 +824,7 @@ void pixiradDetector::getImagesInAThread()
   m_imageThread =  std::thread(&pixiradDetector::getImages, this);
   
   
-  /*
+  */
   
   // Two threads:
   // - one which will receive as fast as possible all the udp packets. 
@@ -846,7 +855,7 @@ void pixiradDetector::getImagesInAThread()
   
   }
   
-  */
+  
   
   
   
@@ -923,7 +932,7 @@ void pixiradDetector::recvLoopForImageUDPStream(){
   
   
  
-  
+/*  
   DEB_TRACE() << "Modification of socket SO_RCVBUF size";
   int rcvBufferSize;
   socklen_t sockOptSize = sizeof(rcvBufferSize);
@@ -941,7 +950,7 @@ void pixiradDetector::recvLoopForImageUDPStream(){
    getsockopt(socketUDPImage, SOL_SOCKET, SO_RCVBUF, &rcvBufferSize, &sockOptSize);
   DEB_TRACE() << "Final socket receive buf SO_RCVBUF size:" << DEB_VAR1(rcvBufferSize);
   
-  
+  */
   
   
   int lastDatagramToKeep = 0;
@@ -967,37 +976,68 @@ void pixiradDetector::recvLoopForImageUDPStream(){
   m_mutexPositionMessyBuffer.unlock();
 
    
-  unsigned char justOnePacket[1448];
-  unsigned char messyBuffer[ m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq ];
-  commonBuffer =messyBuffer;
+   unsigned char *justOnePacket;
+//   justOnePacket=(unsigned char *)calloc(1448, sizeof(unsigned char));
+  justOnePacket=new unsigned char [1448];
+ // unsigned char messyBuffer[ m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq ];
+  
+   messyBuffer=(unsigned char *)calloc(m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq, sizeof(unsigned char));
+   
+   
+//   messyBuffer=new unsigned char [m_numberOfUDPPacketsPerImage * 1448 * m_nbFramesAcq];
+      
+//   commonBuffer =messyBuffer;
   
   
   DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_UdpPortImages ) ;
-  for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
-    if(not m_stopAcquisition){
+  
+  int packet = 0;
+  int realpacketsize = 0;
+  while (packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq and (not m_stopAcquisition)){
     
-      int realpacketsize = recvfrom(socketUDPImage, (char*)justOnePacket, 1448,  0, NULL, 0);
+    
+      realpacketsize = recvfrom(socketUDPImage, (char*)justOnePacket, 1448,  0, NULL, 0);
 //    recvfrom(socketUDPImage, (char*)buf, 4,  0, NULL, 0);
      
+//       short unsigned int slotID=*(justOnePacket+2);
+//       DEB_TRACE()<< "In RECV "<<DEB_VAR1(slotID);
+      
+      
       if (realpacketsize != 1448){DEB_ERROR() << "A packet has an unexpected size, you should be worried about it." <<DEB_VAR1(realpacketsize); packet--; }
       else if(realpacketsize == -1){DEB_ERROR() << "UDP error, some datagrams has been lost in the wild world of copper cables."<<DEB_VAR1(packet);packet--;} 
       else{ // was reconstruction
 	    // set the place to point for the dispatch method thread.
-	memcpy(&messyBuffer[packet*1448], justOnePacket, 1448);
+// 	memcpy(&messyBuffer[packet*1448] , justOnePacket, 1448);
+
+	m_mutexMessyBufferMemcpy.lock();	
+	memcpy(&messyBuffer[packet*1448] , justOnePacket, 1448);
+// 		std::copy(
+// 		  &justOnePacket[0],
+// 		  &justOnePacket[1448],
+// 		&messyBuffer[packet*1448]	  
+// 		);	
+	m_mutexMessyBufferMemcpy.unlock();
 	
+  
 	m_mutexPositionMessyBuffer.lock();	
 	  positionWithinMessyBuffer++;	
-	  DEB_TRACE()<< "Got one packet "<<DEB_VAR1(positionWithinMessyBuffer); // Comment this out after debug.
+// 	  DEB_TRACE()<< "Got one packet "<<DEB_VAR1(positionWithinMessyBuffer); // Comment this out after debug.
 	m_mutexPositionMessyBuffer.unlock();
-
+	packet++; // packet N is ready to be post treated
       }
     }
-  }
+  
   
   m_mutexUDPImage.unlock();
 
   close(socketUDPImage);
  
+  
+ 		// To be removed :
+ 	  char *sourceAsChar4 = reinterpret_cast<char*>(messyBuffer); 
+ 	  std::ofstream b_stream4("/tmp/recv.bin", std::fstream::out | std::fstream::binary);
+ 	  b_stream4.write(sourceAsChar4,1448*2539);
+ 	  b_stream4.close();
   
   
 }
@@ -1009,35 +1049,52 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
   m_allImagesReceived = false;
   
   
+  
   // Buffer manager for the reconstruction (the one that gives the pointer)
-  StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+   StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+   reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+  
+   StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
+   finalBufferMgr = m_bufferCtrlObj.getBuffer();
+  
+  
+   
+  /*
+  DEB_TRACE()<< "Buffers "<<DEB_VAR3(reconstructionBufferMgr, finalBufferMgr,m_reconstructionBufferCtrlObj)
+  */
   
   
   
-  unsigned short acknowledgator[m_nbFramesAcq];
+if (acknowledgator == NULL){
+  acknowledgator = (unsigned short*) calloc(m_nbFramesAcq, sizeof(unsigned short));
   memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
-  m_acknowledgatorPointer = & acknowledgator[0];
+}
+else {
+  acknowledgator = (unsigned short*) realloc(acknowledgator, m_nbFramesAcq * sizeof(unsigned short));
+  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));  
+}
+  /*
+  acknowledgator=(unsigned short *)calloc(m_nbFramesAcq, sizeof(unsigned short));
+   
+  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
+//   m_acknowledgatorPointer = & acknowledgator[0];*/
   
   
   unsigned short   slotId=0;
-  unsigned short   packet_id;
-  unsigned short   packet_id_1;
-  unsigned short   packet_id_2;
-  unsigned short   packet_id_18;
+  unsigned short   packet_id=0;
+  unsigned short   packet_id_1=0;
+  unsigned short   packet_id_2=0;
+  unsigned short   packet_id_18=0;
   unsigned short   packetTag =0;
   
-  
-  StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
-  
-  m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj();
   
   
   setStatusDetector(HwInterface::StatusType::Readout);
   
   m_stopAcquisition = false;
   
-  int lastDatagramToKeep = 0;
-  int amountOfTheLastDatagramToKeep = 0;
+  m_numberOfUDPPacketsPerImage = 0;
+  
   if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
     amountOfTheLastDatagramToKeep= 960;
@@ -1049,88 +1106,160 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
     m_numberOfUDPPacketsPerImage = 360; 
   }
   
+  DEB_TRACE()<< "Dispatch loop detector parameters "<<DEB_VAR5(m_sensorConfigBuild, m_nbModules,lastDatagramToKeep,m_numberOfUDPPacketsPerImage,amountOfTheLastDatagramToKeep); // Comment this out after debug.
+	  
+	  
+	  
   int localCopyOfPositionWithinMessyBuffer = -1;
   
   unsigned char *buf;
+  buf = (unsigned char*) calloc(1448, sizeof(unsigned char));
+  
   int packet = 0;
   bool finished = false;
-   while (packet <= (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq and !finished ){
+  
+  
+  
+   while (packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq and !finished ){
      
-	m_mutexPositionMessyBuffer.lock();	
+// 	m_mutexPositionMessyBuffer.lock();	
 	localCopyOfPositionWithinMessyBuffer = positionWithinMessyBuffer;	
-	m_mutexPositionMessyBuffer.unlock();
-	  if (packet<=localCopyOfPositionWithinMessyBuffer){
+// 	m_mutexPositionMessyBuffer.unlock();
+	  if (packet<localCopyOfPositionWithinMessyBuffer){
 	    
 	
-	  DEB_TRACE()<< "Dispatch loop dispatching"<<DEB_VAR2(localCopyOfPositionWithinMessyBuffer, packet); // Comment this out after debug.
+ 	  DEB_TRACE()<< "Dispatch loop dispatching"<<DEB_VAR2(localCopyOfPositionWithinMessyBuffer, packet); // Comment this out after debug.
 	  
 		      
-	      
-		    buf = &commonBuffer[localCopyOfPositionWithinMessyBuffer*1448+4];
+		
+// 		buf = commonBuffer+(localCopyOfPositionWithinMessyBuffer*1448+4);
+// 		buf = &messyBuffer[localCopyOfPositionWithinMessyBuffer*1448];
+// 	uint8_t *messybufferAsUint8b = reinterpret_cast<uint8_t*>(messyBuffer);
+	
+	m_mutexMessyBufferMemcpy.lock();
+	
+ 		memcpy(&buf,&messyBuffer+(packet*1448), 1448 );
+	  
+	m_mutexMessyBufferMemcpy.unlock();
+	
+// 	m_mutexMessyBufferMemcpy.lock();
+// 		std::copy(
+// 		  &messyBuffer[localCopyOfPositionWithinMessyBuffer*1448],
+// 		  &messyBuffer[(localCopyOfPositionWithinMessyBuffer+1)*1448],
+// 		buf	  
+// 		);
+	  
+	
+	
+ 		// To be removed :
+  if(packet==0){
+	char *sourceAsChar4 = reinterpret_cast<char*>(buf); 
+ 	  std::ofstream b_stream4("/tmp/buf.bin", std::fstream::out | std::fstream::binary);
+ 	  b_stream4.write(sourceAsChar4,1448);
+ 	  b_stream4.close();
+  }
+	
+ 		 DEB_TRACE()<< "1";
 	    
 		packetTag=*buf;
 		
+// 		 DEB_TRACE()<< "2   "<<DEB_VAR3(packetTag,  buf,messyBuffer[localCopyOfPositionWithinMessyBuffer*1448]);
 		//TODO: Autocal
-		if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
+		//if(packetTag & AUTOCAL_DATA){DEB_ERROR() << "AUTOCAL DATA received - Someone should do something about it.";}
 		
 		// SlotId is the image frame number in pixirad manual
 		// packet id is the part of the image that is in the received udp datagram
 		
+// 		 DEB_TRACE()<< "3";
 		slotId=buf[1];
+		int slotIdInt = (int)slotId;
 		packet_id_1=buf[2];
 		packet_id_2=buf[3];
+// 		 DEB_TRACE()<< "4";
 		
 		packet_id_18=packet_id_1<<8;
+		
+// 		 DEB_TRACE()<< "5";
 		packet_id = packet_id_18 + packet_id_2;
 		
+		 DEB_TRACE()<< "6" <<DEB_VAR1(packet_id);
+		 
 		if (packet_id <= lastDatagramToKeep){
+		  
+		 DEB_TRACE()<< "7";
 		  
 		  bool iDontKnowMyPlace = true;
 		  bool fireLima = false;
 		  
-		  while (iDontKnowMyPlace) {
+  DEB_TRACE()<< "Dispatch loop detector parameters "<<DEB_VAR5(m_sensorConfigBuild, m_nbModules,lastDatagramToKeep,m_numberOfUDPPacketsPerImage,amountOfTheLastDatagramToKeep); // Comment this out after debug.
+  
+		  
+		  while (iDontKnowMyPlace and slotIdInt<=m_nbFramesAcq) {
 		    
-		    if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
+		 DEB_TRACE()<< "8  "<<DEB_VAR3(slotIdInt, acknowledgator[slotIdInt],lastDatagramToKeep );
+		 
+		    if((int)acknowledgator[slotIdInt] <= lastDatagramToKeep - 2){
 		      iDontKnowMyPlace = false; 	    
-		      acknowledgator[slotId] = acknowledgator[slotId] +1;
+		      
+		      DEB_TRACE()<< "8a  "<<DEB_VAR1(acknowledgator[slotIdInt]);
+		      acknowledgator[slotIdInt] = acknowledgator[slotIdInt] +1;
+		      DEB_TRACE()<< "8b  "<<DEB_VAR1(acknowledgator[slotIdInt]);
 		    }
-		    else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+		    else if((int)acknowledgator[slotIdInt] == lastDatagramToKeep - 1 ){
 		      
-		      DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
+		      DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotIdInt);	
 		      
-		      acknowledgator[slotId] = acknowledgator[slotId] +1;
+		      acknowledgator[slotIdInt] = acknowledgator[slotIdInt] +1;
 		      iDontKnowMyPlace = false; 
 		      fireLima = true;
 		    }
-		    if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
-		      slotId = slotId + 256;
+		    if( (not fireLima) and (int)acknowledgator[slotIdInt] >= lastDatagramToKeep){
+		      slotIdInt = slotIdInt + 256;
 		      iDontKnowMyPlace = true; // Still true, could be more than 512
 		    }
 		  }
 		  
-		  void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
+		 DEB_TRACE()<< "9  "<<DEB_VAR1(slotIdInt);
+		 
+// 		 void *voidimageptr = m_reconstructionBufferCtrlObj->getBuffer().getFrameBufferPtr(slotIdInt);
+ 		 void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotIdInt);
 		  
+		  
+		 DEB_TRACE()<< "9a  "<<DEB_VAR1(voidimageptr);
+		 
+		 
 		  uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
 		  
+		 DEB_TRACE()<< "10  "<<DEB_VAR1(image8b);
+		 
 		  
 		  int positionOfDatagramInImage8b =  packet_id * 1440; // 
 		  
-		  if (packet_id == lastDatagramToKeep){
+		 DEB_TRACE()<< "11  "<<DEB_VAR1(positionOfDatagramInImage8b);
+		 
+		  if ((int)packet_id == lastDatagramToKeep){
 		    memcpy(&image8b[positionOfDatagramInImage8b], buf+4, amountOfTheLastDatagramToKeep);
 		  }
 		  else {
 		    memcpy(&image8b[positionOfDatagramInImage8b], buf+4, 1440);
 		  }
 		  
+		  
+		 DEB_TRACE()<< "12  "<<DEB_VAR1(positionOfDatagramInImage8b);
+		  
+		  
 		  if(fireLima)
 		  {   
 		    // Build a frame info for Lima.
 		    HwFrameInfoType frame_info;
-		    frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
+		    frame_info.acq_frame_nb = slotIdInt;// First image is 0 for frame info
 		    
-		    DEB_TRACE() << DEB_VAR2(frame_info, slotId);
+		    DEB_TRACE() << DEB_VAR2(frame_info, slotIdInt);
 		    
-		    finalBufferMgr.newFrameReady(frame_info); 
+ 		    finalBufferMgr.newFrameReady(frame_info); 
+		    
+		    
+// 		    finalBufferMgr->newFrameReady(frame_info); 
 		    
 		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
 		    
@@ -1145,11 +1274,12 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
 		    
 		  }
 		  
-	if(packet >= (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq ){finished=true;}
-	packet++;    
-		}// discard too much datagrams
+		  // discard too much datagrams
+		 // if(packet >= (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq ){finished=true;}
+		}
+		  packet++;    
 	  }
-     
+     // microsleep or something here ?
   }
   
 
@@ -1406,9 +1536,10 @@ void pixiradDetector::printMissingImageInfo(){
   
   for (int img = 0; img<m_nbFramesAcq; img++){
     
-    if( m_acknowledgatorPointer[img] < lastDatagramToKeep ){
+    if( acknowledgator[img] < lastDatagramToKeep ){
       
-      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR3(img,lastDatagramToKeep, lastDatagramToKeep - m_acknowledgatorPointer[img]);
+      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR3(img,lastDatagramToKeep, lastDatagramToKeep - acknowledgator[img]);
+      
     }
   }
 }

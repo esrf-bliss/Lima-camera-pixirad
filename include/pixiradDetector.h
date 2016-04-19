@@ -34,6 +34,7 @@ class pixiradDetector {
 
 public:
   
+//   pixiradDetector(std::string ipAdressDetectorServer, int TcpPort);
   pixiradDetector(std::string ipAdressDetectorServer, int TcpPort,SoftBufferCtrlObj& buffer);
   ~pixiradDetector();
   
@@ -299,12 +300,13 @@ public:
   StdBufferCbMgr* buffer_mgr;
   StdBufferCbMgr* finalBufferMgr ;
   
-  SoftBufferCtrlObj& m_bufferCtrlObj;
+//   SoftBufferCtrlObj& m_bufferCtrlObj;
+  SoftBufferCtrlObj* m_bufferCtrlObj;
   
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
 //   int m_nbOfFrameInReconstructionBuffer = 32;
-  int m_nbOfFrameInReconstructionBuffer = 128;
+  int m_nbOfFrameInReconstructionBuffer = 64;
   
   
   
@@ -325,9 +327,11 @@ public:
   
   
   
+  unsigned short * acknowledgator = NULL;
   
-  
-  ushort *m_acknowledgatorPointer;
+//   StdBufferCbMgr reconstructionBufferMgr ;
+//     StdBufferCbMgr& finalBufferMgr;
+//   ushort *m_acknowledgatorPointer;
   
   
   // Mode where e pixirad8 is used with only one module. -1 means 8 modules together.
@@ -336,6 +340,9 @@ public:
     
    bool m_seedModeForDebugOnlyInOneChipWithPX8 = false;
   
+  
+  int lastDatagramToKeep = 0;
+  int amountOfTheLastDatagramToKeep = 0;
   
   // /////////////// START   ////////////////////
   
@@ -488,9 +495,12 @@ private:
   int m_weatherUdpPort = 2224;
   int m_UdpPort = 4444;
   
-  unsigned char *commonBuffer;
+//   unsigned char *commonBuffer;
+  
+  unsigned char * messyBuffer;
   
   std::mutex m_mutexPositionMessyBuffer;
+  std::mutex m_mutexMessyBufferMemcpy;
   int positionWithinMessyBuffer  = 0;  
   std::thread m_imageThread; // old school way (one thread)
   std::thread m_imageThreadRecvLoop;

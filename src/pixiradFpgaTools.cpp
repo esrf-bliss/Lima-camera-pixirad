@@ -243,7 +243,6 @@ void lima::Pixirad::genera_tabella_clock(unsigned short *clocks, unsigned short 
     tempo=tempo*2+bit1;
     tempo=tempo%potenze[15];
     clocks[tempo]=i;
-    
   }
   clocks[0]=0;
   return;

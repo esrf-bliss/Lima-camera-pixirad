@@ -196,14 +196,14 @@ Data  _ReconstructionTask::process(Data& src)
      
      DEB_TRACE()<< "FPGA (3) Decode " << DEB_VAR3( conversion_table, matrix_dim_words, codeDepth);
 
-//    for(int i=0;i<nbModules;i++){  
+    for(int i=0;i<nbModules;i++){  
       
 //      The pseudo-random decoding must be temporarily disabled because the test pattern is natural binary coded. 
- //     decode_pixie_data_buffer( conversion_table,  
-//				codeDepth,
-//				destinationAsInt+i*matrix_dim_words,
-//				matrix_dim_words  );
- //   }
+      decode_pixie_data_buffer( conversion_table,  
+				codeDepth,
+				destinationAsInt+i*matrix_dim_words,
+				matrix_dim_words  );
+      }
   /*    
      char *sourceAsChar6 = reinterpret_cast<char*>(destinationAsInt); 
      std::ofstream b_stream6("/tmp/destinationAsInt_3b.bin", std::fstream::out | std::fstream::binary);
