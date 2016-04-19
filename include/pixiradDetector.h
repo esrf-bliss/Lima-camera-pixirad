@@ -300,7 +300,7 @@ public:
   
   
   StdBufferCbMgr* buffer_mgr;
-//   StdBufferCbMgr* finalBufferMgr ;
+   StdBufferCbMgr* finalBufferMgr ;
   
    SoftBufferCtrlObj& m_bufferCtrlObj;
 //   SoftBufferCtrlObj* m_bufferCtrlObj;

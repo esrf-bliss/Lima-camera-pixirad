@@ -498,7 +498,7 @@ void lima::Pixirad::Camera::startAcq() {
 	
 		  
 		  /// If using the two threads version
-// 	m_pixirad->dispatchLoopForUDPStreamToIndividualImage();
+//   	m_pixirad->dispatchLoopForUDPStreamToIndividualImage();
 	
 	 
 }

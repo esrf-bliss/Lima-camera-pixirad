@@ -636,10 +636,16 @@ void pixiradDetector::getImages()
   */
   
   
-//   unsigned short acknowledgator[m_nbFramesAcq];
-acknowledgator = (unsigned short*) realloc(acknowledgator, m_nbFramesAcq * sizeof(unsigned short));
+
+
+  
 if (acknowledgator == NULL){
   acknowledgator = (unsigned short*) calloc(m_nbFramesAcq, sizeof(unsigned short));
+  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
+}
+else {
+  acknowledgator = (unsigned short*) realloc(acknowledgator, m_nbFramesAcq * sizeof(unsigned short));
+  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));  
 }
 //   memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
 //   m_acknowledgatorPointer = & acknowledgator[0];
@@ -655,7 +661,7 @@ if (acknowledgator == NULL){
   
    StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
   
-//   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); // Already done in prepare with proper size and nbimages...
+   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); // Already done in prepare with proper size and nbimages...
   
   
   setStatusDetector(HwInterface::StatusType::Readout);
@@ -725,7 +731,7 @@ if (acknowledgator == NULL){
 	bool iDontKnowMyPlace = true;
 	bool fireLima = false;
 	
-	while (iDontKnowMyPlace and slotId<=m_nbFramesAcq) {
+	while (iDontKnowMyPlace) { // and slotId<=m_nbFramesAcq)
 	  
 	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
 	    iDontKnowMyPlace = false; 	    
@@ -826,6 +832,14 @@ void pixiradDetector::getImagesInAThread()
   DEB_TRACE() << "Creation of an independant thread for image reception." ;
   m_imageThread =  std::thread(&pixiradDetector::getImages, this);
   
+
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -834,12 +848,7 @@ void pixiradDetector::getImagesInAThread()
   // - one which will dispatch all packets per image and in the good order for the reconstruction task.
   //   this one will also pass the image in a lima buffer and the reconstruction tasks will be threaded.
   
-  
-  
-  
-  
-  /*
-  
+ /*
   if(m_imageThreadRecvLoop.joinable()){
     DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThreadRecvLoop.get_id());
     m_imageThreadRecvLoop.detach();
@@ -851,33 +860,8 @@ void pixiradDetector::getImagesInAThread()
     m_imageThreadRecvLoop =  std::thread(&pixiradDetector::recvLoopForImageUDPStream, this);
   
   }
-  
   */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  /*
-  if(m_imageThreadDispatchLoop.joinable()){
-    DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThreadDispatchLoop.get_id());
-    m_imageThreadDispatchLoop.detach();
-    DEB_TRACE() << "Detached" << DEB_VAR1(m_imageThreadDispatchLoop.get_id());
-  }
-  else{
-      
-    DEB_TRACE() << "Creation of two independant threads, one for udp reception and one for udp dispatch in individual images." ;
-    m_imageThreadDispatchLoop =  std::thread(&pixiradDetector::dispatchLoopForUDPStreamToIndividualImage, this);
-  
-  }*/
-  
-  
-//   dispatchLoopForUDPStreamToIndividualImage(); // And we wait for it to finish... /// Nope need to send the acquisition command first. //moved in Camera
-  
+  // DO not forget to reactivate in camera the dispatch method (blocking one)
   
   
 }
@@ -1078,6 +1062,14 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
   DEB_TRACE()<< "Buffers "<<DEB_VAR3(reconstructionBufferMgr, finalBufferMgr,m_reconstructionBufferCtrlObj)
   */
   
+  // Buffer manager for the reconstruction (the one that gives the pointer)
+//    StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+   
+   StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
+   
+   
+   StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
+    m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //
   
   
 if (acknowledgator == NULL){
@@ -1242,10 +1234,6 @@ else {
     DEB_TRACE() << "Soft Buffer within  dispatchLoopForUDPStreamToIndividualImage:" << DEB_VAR1(m_reconstructionBufferCtrlObj);
     
     
-  // Buffer manager for the reconstruction (the one that gives the pointer)
-//    StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
-   
-   StdBufferCbMgr & reconstructionBufferMgr  = m_reconstructionBufferCtrlObj->getBuffer();
    
   
   
@@ -1290,24 +1278,24 @@ else {
 		    // Build a frame info for Lima.
 		    HwFrameInfoType frame_info;
 		    DEB_TRACE()<< "13.1  "<<DEB_VAR1(fireLima);
-		    frame_info.acq_frame_nb = slotIdInt;// First image is 0 for frame info
+		    frame_info.acq_frame_nb = (int)slotId;// First image is 0 for frame info
 		    
 		    DEB_TRACE()<< "13.2  "<<DEB_VAR1(fireLima);
-		    DEB_TRACE() << DEB_VAR2(frame_info, slotIdInt);
+		    DEB_TRACE() << DEB_VAR3(frame_info, slotIdInt, (int)slotId);
 		    
-		      StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
+// 		      StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
 		    //    finalBufferMgr = m_bufferCtrlObj.getBuffer();
 		      
 		    DEB_TRACE()<< "13.3  "<<DEB_VAR2(fireLima, &finalBufferMgr );
-		      
+		      // Pbl c'est pas frae info mais finalBufferMgr
 		  
-// 		    finalBufferMgr.newFrameReady(frame_info); 
+ 		    finalBufferMgr.newFrameReady(frame_info); 
 		    
 		    DEB_TRACE()<< "13.4  "<<DEB_VAR1(fireLima);
 		    
-// 		    finalBufferMgr->newFrameReady(frame_info); 
+//  		    finalBufferMgr->newFrameReady(frame_info); 
 		    
-		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
+// 		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
 		    
 		    fireLima = false;
 		    
@@ -1592,8 +1580,12 @@ void pixiradDetector::printMissingImageInfo(){
     
     if( acknowledgator[img] < lastDatagramToKeep ){
       
-      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR3(img,lastDatagramToKeep, lastDatagramToKeep - acknowledgator[img]);
+      DEB_ALWAYS() << "Incomplete Image: " << DEB_VAR4(img,lastDatagramToKeep, acknowledgator[img], lastDatagramToKeep - acknowledgator[img]);
       
+    }
+    else{
+      
+      DEB_ALWAYS() << "Complete Image: " << DEB_VAR4(img,lastDatagramToKeep, acknowledgator[img], lastDatagramToKeep - acknowledgator[img]);
     }
   }
 }
