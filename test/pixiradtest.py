@@ -157,8 +157,8 @@ saving = control.saving()
 def newsave(newsaving, basename):
   pars=newsaving.getParameters()
   #pars.directory='/users/watier/test_du_stagiaire'
-  pars.directory='/data/visitor/md829/id17/Christopher_head_1'
-  #pars.directory='/tmp'
+  #pars.directory='/data/visitor/md829/id17/Christopher_head_1'
+  pars.directory='/tmp'
   pars.prefix=basename
   pars.suffix='.edf'
   #pars.suffix='.raw'
@@ -333,8 +333,8 @@ def stability(fps, nbexpo, nbcycles):
 
   plt.show()
 
-externalTrigger()
-
+#externalTrigger()
+internalTrigger()
 
 camera.setLowThreshold0(1); camera.setLowThreshold1(1); camera.setHighThreshold0(96);  camera.setHighThreshold1(96);
 

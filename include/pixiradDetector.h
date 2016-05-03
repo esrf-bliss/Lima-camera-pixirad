@@ -346,6 +346,14 @@ public:
   int lastDatagramToKeep = 0;
   int amountOfTheLastDatagramToKeep = 0;
   
+  
+// email from pixirad :
+// With 1ms exposure the frame rate is dominated by the readout time (33ms).
+// 1000 frames would cover (33s +1s) of acquistion then I expect a long time to complete the data processing.
+//   the minimum time between triggers should be increased. you have to tune it experimentally. Maybe close to 38ms
+  
+  int latency_measured  =50; 
+  
   // /////////////// START   ////////////////////
   
   

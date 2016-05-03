@@ -705,7 +705,7 @@ void lima::Pixirad::Camera::setLatTime(double lat_time) {
 
 void lima::Pixirad::Camera::getLatTime(double& lat_time) {
 	DEB_MEMBER_FUNCT();
-	lat_time = m_pixirad->m_pauseBetweenAcq / 1000;
+	lat_time = m_pixirad->m_pauseBetweenAcq / 1000 + m_pixirad->latency_measured;
 }
 
 void lima::Pixirad::Camera::getExposureTimeRange(double& min_expo, double& max_expo) const {
