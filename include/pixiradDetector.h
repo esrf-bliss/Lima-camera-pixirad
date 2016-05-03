@@ -185,7 +185,7 @@ public:
   int m_sensorConfigLowThreshold0DAC = 0;
   
   // Internal biais
-  int m_sensorConfigRefInternalBiais = 1;
+  int m_sensorConfigRefInternalBiais = 2;
   int m_sensorConfigAusFSInternalBiais = 7;
   // Dead time free mode or not 
   std::string m_sensorConfigDeadTimeFreeMode = "NODTF"; // DTF or NODTF
@@ -308,7 +308,7 @@ public:
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
 //   int m_nbOfFrameInReconstructionBuffer = 32;
-  int m_nbOfFrameInReconstructionBuffer = 64;
+  int m_nbOfFrameInReconstructionBuffer = 256;
   
   
   

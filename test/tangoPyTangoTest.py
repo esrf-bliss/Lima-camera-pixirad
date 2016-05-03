@@ -8,12 +8,14 @@ def initialSetupForPX8():
   #doit = True
   #while(doit):
     #try:
-      pixi.cooling_temperature_setpoint = -30
-      pixi.high_voltage_biais = 400
+      pixi.cooling_temperature_setpoint = -50
+      pixi.high_voltage_biais = 2100
       pixi.dead_time_free_mode = 'DEAD_TIME_FREE_MODE_OFF'
       pixi.color_mode = 'COLMODE_1COL0'
-      pixi.low_threshold0 =  9
-      pixi.high_threshold0 = 60
+      pixi.low_threshold0 =  1
+      pixi.high_threshold0 = 99
+      pixi.low_threshold1 =  1
+      pixi.high_threshold1 = 99
       #pixi.sensor_config_build = 'PX8'
       pixi.h_v_bias_mode_power = 1
       pixi.trsf_mode = "UNMOD"
@@ -65,7 +67,7 @@ def videoTest():
 
 #camera_interface.setHybridMode(camera.CDTE)
 
-#initialSetupForPX1()
+initialSetupForPX8()
 
 
 

@@ -702,6 +702,7 @@ else {
   
   DEB_TRACE()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_UdpPortImages ) ;
   for(int packet = 0 ; packet < (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq; packet++  ){
+    
     if(not m_stopAcquisition){
     
       int realpacketsize = recvfrom(socketUDPImage, (char*)buf, MAX_PACK_LEN,  0, NULL, 0);
@@ -719,12 +720,14 @@ else {
       // SlotId is the image frame number in pixirad manual
       // packet id is the part of the image that is in the received udp datagram
       
+      slotId=0;
       slotId=buf[1];
       packet_id_1=buf[2];
       packet_id_2=buf[3];
       
       packet_id_18=packet_id_1<<8;
       packet_id = packet_id_18 + packet_id_2;
+      
       
       if (packet_id <= lastDatagramToKeep){
 	
@@ -1295,7 +1298,7 @@ else {
 		    
 //  		    finalBufferMgr->newFrameReady(frame_info); 
 		    
-// 		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
+// 		    DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_infbgo);
 		    
 		    fireLima = false;
 		    
@@ -1461,10 +1464,10 @@ int pixiradDetector::update_thresolds_from_energies(){
 				  th_int,
 				  th_act);
       /*************/
-      m_sensorConfigLowThreshold0	= (float)th_act[0];
-    m_sensorConfigHighThreshold0	= (float)th_act[1];
-    m_sensorConfigLowThreshold1	        = (float)th_act[2];
-    m_sensorConfigHighThreshold1	= (float)th_act[3];
+ //     m_sensorConfigLowThreshold0	= (float)th_act[0];
+  //  m_sensorConfigHighThreshold0	= (float)th_act[1];
+   // m_sensorConfigLowThreshold1	        = (float)th_act[2];
+    // m_sensorConfigHighThreshold1	= (float)th_act[3];
     /*************/
     m_sensorConfigLowThreshold0DAC	= th_int[0];
     m_sensorConfigHighThreshold0DAC 	= th_int[1];

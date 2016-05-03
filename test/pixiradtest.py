@@ -82,8 +82,10 @@ print "\n\n\n\n ======= INTERFACE ======== \n"
 
 camera_interface = PixiradAcq.Interface(camera)
 
-camera_interface.setNbiMode(camera.SensorConfigNBI_OFF)
-camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeON)
+#camera_interface.setNbiMode(camera.SensorConfigNBI_OFF)
+camera_interface.setNbiMode(camera.SensorConfigNBI_ON)
+#camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeON)
+camera_interface.setDeadTimeFreeMode(camera.DeadTimeFreeModeOFF)
 camera_interface.setRunConfigMode(camera.DATA)
 
 
@@ -96,8 +98,7 @@ camera_interface.setColorMode(camera.COLMODE_1COL0)
 
 camera.setCoolingTemperatureSetpoint(-50)
 
-camera.setHighThreshold0(25)
-camera.setLowThreshold0(0)
+
 
 camera.setLowThreshold0(10)
 camera.setHighThreshold0(60)
@@ -110,7 +111,7 @@ camera.setHVBiasModePower(1)
 
 camera.setHighVoltageDelayBeforeOn(3)
 
-camera.setHVRefreshPeriod(1);
+camera.setHVRefreshPeriod(1000);
 #camera.setHVBiasModePower(camera.STDHV);
 
 
@@ -140,12 +141,12 @@ camera_interface.setTrsfMode(camera.UNMOD)
 
 
 
-
 print "\n\n\n\n ======= CONTROL ======== \n"
 control = Core.CtControl(camera_interface)
 
 print control.Status()
 
+control.buffer().setMaxMemory(70)
 
 print "\n\n\n\n ======= ACQUISITION OBJECT ======== \n"
 
@@ -155,7 +156,9 @@ saving = control.saving()
 
 def newsave(newsaving, basename):
   pars=newsaving.getParameters()
-  pars.directory='/users/watier/test_du_stagiaire'
+  #pars.directory='/users/watier/test_du_stagiaire'
+  pars.directory='/data/visitor/md829/id17/Christopher_head_1'
+  #pars.directory='/tmp'
   pars.prefix=basename
   pars.suffix='.edf'
   #pars.suffix='.raw'
@@ -163,7 +166,11 @@ def newsave(newsaving, basename):
   #pars.fileFormat=Core.CtSaving.RAW
   pars.savingMode=Core.CtSaving.AutoFrame
   newsaving.setParameters(pars)
+  
+  
 
+  
+#newsave(saving , time.strftime('TestPX8_on_ID17_firsttest_%Y_%m_%d-%H_%M_%S'))
 
 #newsave(saving , time.strftime('test_stagiaire_%Y_%m_%d-%H_%M_%S'))
 
@@ -185,6 +192,7 @@ def internalTrigger():
 
 print control.Status()
 
+newsave(saving , time.strftime('TestPX8_change_filename_with_newsave_%Y_%m_%d-%H_%M_%S'))
 
 
 acq.setAcqExpoTime(1)
@@ -195,7 +203,19 @@ acq.setAcqNbFrames(1)
 
 
 
-
+def id_17_acq():
+  
+  debugoff();
+  
+  acq.setLatencyTime(0); 
+  camera.setLowThreshold0(0); 
+  camera.setLowThreshold1(0); 
+  camera.setHighThreshold0(99);  
+  camera.setHighThreshold1(99); 
+  acq.setAcqNbFrames(1); 
+  acq.setAcqExpoTime(0.001); 
+  control.prepareAcq(); 
+  control.startAcq()
 
 
 
@@ -313,10 +333,13 @@ def stability(fps, nbexpo, nbcycles):
 
   plt.show()
 
+externalTrigger()
 
 
+camera.setLowThreshold0(1); camera.setLowThreshold1(1); camera.setHighThreshold0(96);  camera.setHighThreshold1(96);
 
-
+def noAccumulation():
+  acq.setAcqMode(Core.Single)
 
 def accumulation(tempsExpoMax, tempsTotal, nbframes):
   
@@ -474,8 +497,8 @@ class MyCbk(Core.CtControl.ImageStatusCallback) :
 	    #print 'ic', type(ic), ic.shape
 
 
-#Cbk = MyCbk()
-#control.registerImageStatusCallback(Cbk)
+Cbk = MyCbk()
+control.registerImageStatusCallback(Cbk)
 
 
 def plot():
