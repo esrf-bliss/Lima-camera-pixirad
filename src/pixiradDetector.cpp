@@ -70,8 +70,7 @@ using namespace lima::Pixirad;
   setStatusDetector(HwInterface::StatusType::Config);
   
  
-  // TODO: COntinue testing regexp on this thread :
-  m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
+   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
 //   setStatusDetector(HwInterface::StatusType::Ready);
   
@@ -562,7 +561,7 @@ void pixiradDetector::getImages()
   
   
   
-  std::unique_lock<std::mutex> uniqLock(m_mutexUDPImage);
+  //  std::unique_lock<std::mutex> uniqLock(m_mutexUDPImage);
   
   /////////////////////  SOCKET UDP /////////////////////////////////
   DEB_TRACE() << "UDP Socket Creation";
@@ -639,14 +638,8 @@ void pixiradDetector::getImages()
 
 
   
-if (acknowledgator == NULL){
-  acknowledgator = (unsigned short*) calloc(m_nbFramesAcq, sizeof(unsigned short));
-  memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
-}
-else {
   acknowledgator = (unsigned short*) realloc(acknowledgator, m_nbFramesAcq * sizeof(unsigned short));
   memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));  
-}
 //   memset(acknowledgator, 0, m_nbFramesAcq*sizeof(unsigned short));
 //   m_acknowledgatorPointer = & acknowledgator[0];
   
@@ -805,7 +798,7 @@ m_allImagesReceived = true;
 
 close(socketUDPImage);
 
-m_mutexUDPImage.unlock();
+//m_mutexUDPImage.unlock();
 
 }
 
@@ -899,7 +892,7 @@ void pixiradDetector::recvLoopForImageUDPStream(){
   }
   
   
-  std::unique_lock<std::mutex> uniqLock(m_mutexUDPImage);
+  //  std::unique_lock<std::mutex> uniqLock(m_mutexUDPImage);
   
   
   /////////////////////  SOCKET UDP /////////////////////////////////
@@ -1037,7 +1030,7 @@ void pixiradDetector::recvLoopForImageUDPStream(){
     }
   
   
-  m_mutexUDPImage.unlock();
+  //  m_mutexUDPImage.unlock();
 
   close(socketUDPImage);
  

@@ -29,7 +29,8 @@ import numpy as np
 #
 
 #Be wild:
-Core.Processlib.PoolThreadMgr.get().setNumberOfThread(20)
+Core.Processlib.PoolThreadMgr.get().setNumberOfThread(1)
+#Core.Processlib.PoolThreadMgr.get().setNumberOfThread(20)
 
 
 def debugtrace():
