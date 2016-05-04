@@ -328,9 +328,6 @@ public:
   int m_numberOfUDPPacketsPerImage =0;
   
   
-  
-  unsigned short * acknowledgator = NULL;
-  
 //   StdBufferCbMgr reconstructionBufferMgr ;
 //     StdBufferCbMgr& finalBufferMgr;
 //   ushort *m_acknowledgatorPointer;
@@ -507,7 +504,7 @@ public:
   std::thread m_imageThreadRecvLoop;
   std::thread m_imageThreadDispatchLoop;
   std::thread m_boxHumidityTempMonitor;
-  
+  Cond m_cond;
 private:
   std::string m_ipAdressDetector = "192.168.0.1";
   int m_TcpPort = 2222;
