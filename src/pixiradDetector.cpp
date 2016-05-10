@@ -655,7 +655,7 @@ void pixiradDetector::getImages()
 
    StdBufferCbMgr& finalBufferMgr = m_bufferCtrlObj.getBuffer();
   
-   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); // Already done in prepare with proper size and nbimages...
+//    m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); // Already done in prepare with proper size and nbimages...
   
   
   setStatusDetector(HwInterface::StatusType::Readout);
@@ -690,11 +690,13 @@ void pixiradDetector::getImages()
     m_numberOfUDPPacketsPerImage = 360; 
   }
   
-  DEB_ALWAYS()<< "Waiting for UDP datagrams"<< DEB_VAR2((m_numberOfUDPPacketsPerImage-1)*m_nbFramesAcq, m_nbFramesAcq ) ;
 
   // For this acquisition we will have (m_number might change):
-  int numberOfUDPPacketsToWaitFor  = m_numberOfUDPPacketsPerImage*m_nbFramesAcq;
+  int numberOfUDPPacketsToWaitFor  = (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq;
 
+  DEB_ALWAYS()<< "Waiting for UDP datagrams"<< DEB_VAR3(numberOfUDPPacketsToWaitFor, m_numberOfUDPPacketsPerImage, m_nbFramesAcq ) ;
+  
+  
   for(packet = 0 ; packet < numberOfUDPPacketsToWaitFor; packet++  ){
     AutoMutex lock(m_cond.mutex());
     if(m_stopAcquisition) break;
@@ -749,6 +751,7 @@ void pixiradDetector::getImages()
 	  }
 	}
 	
+	
 	void *voidimageptr = reconstructionBufferMgr.getFrameBufferPtr(slotId);
 	
 	uint8_t *image8b = reinterpret_cast<uint8_t*>(voidimageptr);
@@ -773,7 +776,7 @@ void pixiradDetector::getImages()
 	  
 	  finalBufferMgr.newFrameReady(frame_info); 
 	  ++firelimaimage;
-	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR1(frame_info);
+	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR5(frame_info, packet, (float)packet/numberOfUDPPacketsToWaitFor*100 ,m_numberOfUDPPacketsPerImage,firelimaimage);
 	  
 	  fireLima = false;
 	  
@@ -794,7 +797,6 @@ void pixiradDetector::getImages()
 //   free(acknowledgator);
 //   // Banzai
 //   m_imageThread.detach();
-m_allImagesReceived = true;
 
 // free(buf);
 
@@ -802,8 +804,12 @@ close(socketUDPImage);
 
 //m_mutexUDPImage.unlock();
  DEB_ALWAYS() << "Out of africa" << DEB_VAR1(m_stopAcquisition);
- DEB_ALWAYS() << "Packet:" << DEB_VAR3(packet, numberOfUDPPacke ,m_numberOfUDPPacketsPerImage);
+ DEB_ALWAYS() << "Packet:" << DEB_VAR3(packet, numberOfUDPPacketsToWaitFor ,m_numberOfUDPPacketsPerImage);
  DEB_ALWAYS() << "Lima callback:" << DEB_VAR1(firelimaimage);
+ 
+  AutoMutex lock(m_cond.mutex());
+m_allImagesReceived = true;
+    lock.unlock();
 }
 
 
@@ -1539,12 +1545,13 @@ void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status)
   
   
   
+   AutoMutex lock(m_cond.mutex());
   if(m_allImagesReceived == false){
     DEB_TRACE() << "All images not received, status forced to readout, no matter what the detector said. Use printMissingImageInfo() to get more infos";
     
     m_pixiradStatus = HwInterface::StatusType::Readout;
   }
-  
+  lock.unlock();
   status = m_pixiradStatus;
   DEB_TRACE() << "Access to status " << DEB_VAR2(m_pixiradStatus, status);
   
@@ -1594,13 +1601,12 @@ void pixiradDetector::printMissingImageInfo(){
 void pixiradDetector::stopAcq(){
   
   DEB_MEMBER_FUNCT();
-  DEB_ALWAYS() << "ACQUISITION HAS BEEN FORCED TO STOP !!!!  Forcing a stop on the acquisition thread.";
+  DEB_ALWAYS() << "STOPACQ():  ACQUISITION HAS BEEN FORCED TO STOP !!!!  Forcing a stop on the acquisition thread.";
   
-  AutoMutex lock(m_cond.mutex());
-  m_allImagesReceived = true;
+   AutoMutex lock(m_cond.mutex());
+     m_allImagesReceived = true;
   if(m_imageThread.joinable()){
     m_stopAcquisition = true;
-    lock.unlock();
     DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
     m_imageThread.join();
   }
@@ -1608,6 +1614,7 @@ void pixiradDetector::stopAcq(){
     DEB_TRACE() << "No previous image thread pending. No problem then.";
   }
   
+    lock.unlock();
   
   
 }
