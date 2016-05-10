@@ -501,32 +501,32 @@ void pixiradDetector::prepareAcq()
   
   Size mySize;
   
-    DEB_TRACE() << "Size declaration :" << DEB_VAR1(mySize);
+//     DEB_TRACE() << "Size declaration :" << DEB_VAR1(mySize);
   
   mySize = Size(476, 512);
   
-    DEB_TRACE() << "Size default :" << DEB_VAR1(mySize);
+//     DEB_TRACE() << "Size default :" << DEB_VAR1(mySize);
   
   getSize(mySize);
   
   
-    DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
+//     DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
   
     
     
-    DEB_TRACE() << "frame initialise  :" << DEB_VAR1(mySize);
+//     DEB_TRACE() << "frame initialise  :" << DEB_VAR1(mySize);
   myFrameDim.setSize(mySize);
   
-    DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
+//     DEB_TRACE() << "Size getted :" << DEB_VAR1(mySize);
   
   
     
-    DEB_TRACE() << "Soft Buffer creation :" << DEB_VAR3(myFrameDim, m_nbOfFrameInReconstructionBuffer, mySize);
+//     DEB_TRACE() << "Soft Buffer creation :" << DEB_VAR3(myFrameDim, m_nbOfFrameInReconstructionBuffer, mySize);
    m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
     
-    DEB_TRACE() << "Soft Buffer creation :" << DEB_VAR1(m_reconstructionBufferCtrlObj);
+//     DEB_TRACE() << "Soft Buffer creation :" << DEB_VAR1(m_reconstructionBufferCtrlObj);
   
   
 
@@ -554,7 +554,7 @@ void pixiradDetector::getSize(Size &size){
   }
   
 //     lock.unlock();
-    DEB_TRACE() << "Size has been configured by detector class as :" << DEB_VAR1(size);
+//     DEB_TRACE() << "Size has been configured by detector class as :" << DEB_VAR1(size);
   
   
 }
@@ -817,7 +817,7 @@ lock.lock();
 	  HwFrameInfoType frame_info;
 	  frame_info.acq_frame_nb = slotId;// First image is 0 for frame info
 	  
-	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
+// 	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
 	  
 	  finalBufferMgr.newFrameReady(frame_info); 
 	  

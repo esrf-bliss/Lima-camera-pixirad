@@ -498,8 +498,8 @@ class MyCbk(Core.CtControl.ImageStatusCallback) :
 	    #print 'ic', type(ic), ic.shape
 
 
-#Cbk = MyCbk()
-#control.registerImageStatusCallback(Cbk)
+Cbk = MyCbk()
+control.registerImageStatusCallback(Cbk)
 
 
 def plot():

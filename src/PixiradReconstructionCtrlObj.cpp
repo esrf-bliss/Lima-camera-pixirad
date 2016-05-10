@@ -33,7 +33,7 @@ public:
     DEB_CONSTRUCTOR();
     
     
-    DEB_TRACE()<< "Conversion Table construction" ;
+//     DEB_TRACE()<< "Conversion Table construction" ;
     
   }
   
@@ -104,9 +104,9 @@ Data  _ReconstructionTask::process(Data& src)
      ushort *destinationAsInt = reinterpret_cast<ushort*>(destination);   
      
      
-     DEB_TRACE()<<"Pointers in reconstruction task: "<< DEB_VAR2(source,destination);
+//      DEB_TRACE()<<"Pointers in reconstruction task: "<< DEB_VAR2(source,destination);
      
-     DEB_TRACE()<< "FPGA Conversion " << DEB_VAR1(m_nbmodules); // the hard way 
+//      DEB_TRACE()<< "FPGA Conversion " << DEB_VAR1(m_nbmodules); // the hard way 
      
      
      //TODO: Adapt for all models
@@ -148,7 +148,7 @@ Data  _ReconstructionTask::process(Data& src)
      
      
      // First step bytes swapping      
-     DEB_TRACE()<< "FPGA (1) Swapping "<< DEB_VAR4(nbModules, colsPerDout, pixieRows, codeDepth);
+//      DEB_TRACE()<< "FPGA (1) Swapping "<< DEB_VAR4(nbModules, colsPerDout, pixieRows, codeDepth);
      for(int i=0;i<nbModules;i++){
        for(int j=0;j<colsPerDout*pixieRows;j++){
 	 for(int k=0;k<codeDepth;k++){
@@ -173,7 +173,7 @@ Data  _ReconstructionTask::process(Data& src)
      
 //      DEB_TRACE()<< "CHECKING"; 
 //      memcpy(destination, temporaryBufferLocal, 8*476*512);
-     DEB_TRACE()<< "FPGA (2) Conversion, bit stream to counts"; 
+//      DEB_TRACE()<< "FPGA (2) Conversion, bit stream to counts"; 
      
      for(int i=0;i<nbModules;i++){
        for(int j=0;j<colsPerDout*pixieRows;j++){
@@ -195,7 +195,7 @@ Data  _ReconstructionTask::process(Data& src)
      */
     
      
-     DEB_TRACE()<< "FPGA (3) Decode " << DEB_VAR3( conversion_table, matrix_dim_words, codeDepth);
+//      DEB_TRACE()<< "FPGA (3) Decode " << DEB_VAR3( conversion_table, matrix_dim_words, codeDepth);
 
     for(int i=0;i<nbModules;i++){  
       
@@ -212,7 +212,7 @@ Data  _ReconstructionTask::process(Data& src)
      b_stream6.close();
   */   
       
-     DEB_TRACE()<< "FPGA (4) Sort " << DEB_VAR2( conversion_table, matrix_dim_words);
+//      DEB_TRACE()<< "FPGA (4) Sort " << DEB_VAR2( conversion_table, matrix_dim_words);
       
     for(int i=0;i<nbModules;i++){ 
       databuffer_sorting(destinationAsInt+i*matrix_dim_words,
@@ -223,7 +223,7 @@ Data  _ReconstructionTask::process(Data& src)
 			);
     }
       
-     DEB_TRACE()<< "FPGA  (5) Map " << DEB_VAR2( conversion_table, matrix_dim_words);
+//      DEB_TRACE()<< "FPGA  (5) Map " << DEB_VAR2( conversion_table, matrix_dim_words);
    /*   
      char *sourceAsChar7 = reinterpret_cast<char*>(destinationAsInt); 
      std::ofstream b_stream7("/tmp/destinationAsInt_3c.bin", std::fstream::out | std::fstream::binary);
@@ -249,7 +249,7 @@ Data  _ReconstructionTask::process(Data& src)
     free(temporaryBufferLocal);
      
     
-    DEB_ALWAYS()<< "Image processed" << DEB_VAR2(frame_number, src);
+    DEB_TRACE()<< "Image processed" << DEB_VAR2(frame_number, src);
     
   
   
