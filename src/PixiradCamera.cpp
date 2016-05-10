@@ -1535,6 +1535,7 @@ void lima::Pixirad::Camera::getTemperaturePeltierCold(float & information){
   
   information = m_pixirad->m_temperaturePeltierCold;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_temperaturePeltierCold, information);
+  lock.unlock();
   
 }
 

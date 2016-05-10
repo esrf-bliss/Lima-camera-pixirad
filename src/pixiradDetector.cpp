@@ -70,7 +70,7 @@ using namespace lima::Pixirad;
   setStatusDetector(HwInterface::StatusType::Config);
   
  // 
-//    m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
+    m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
 //   setStatusDetector(HwInterface::StatusType::Ready);
   
@@ -144,7 +144,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
       regex_t regex;  // pixi8 or all
       regex_t regexpixi1style; // pixi1 only
 	
-	AutoMutex lock(m_cond_regexExtract.mutex());
+// 	AutoMutex lock(m_cond_regexExtract.mutex());
 	
       
       while (1){
@@ -257,6 +257,10 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// Good practice is to check if enabled before looking for an alarm status.
 	// alarms can be activated / deactivated / reinitialised with proper commands
 	
+	
+	  AutoMutex lock(m_cond_regexExtract.mutex());
+	  lock.unlock();
+	  
 	// Alarm for HOT PELTIER
 	regcomp(&regex, ".*THOT_ALARM_STATUS OFF.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
@@ -359,8 +363,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	regfree(&regex);
 	
 	// There is no alarm feedback for the PX1. Humidity is nice too know.
-	  
-	  lock.lock();
+ 	  lock.lock();
 	  
 	if(m_sensorConfigBuild == "PX1" and m_boxHumidity >= 2){
 	  // Forcing alarm if humidity more than 2%
@@ -423,6 +426,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	}
 	regfree(&regex);
 	
+	lock.unlock();
 	
 	}
 	
@@ -532,7 +536,7 @@ void pixiradDetector::getSize(Size &size){
 
   DEB_MEMBER_FUNCT();
   
-    AutoMutex lock(m_cond_regexExtract.mutex());
+//     AutoMutex lock(m_cond_regexExtract.mutex());
   if(m_sensorConfigBuild.compare("PX1") == 0){ 
       size = Size(476, 512);  // what it should be
 //     size = Size(512, 476);
@@ -549,7 +553,7 @@ void pixiradDetector::getSize(Size &size){
   
   }
   
-    lock.unlock();
+//     lock.unlock();
     DEB_TRACE() << "Size has been configured by detector class as :" << DEB_VAR1(size);
   
   
@@ -817,9 +821,7 @@ lock.lock();
 	  
 	  finalBufferMgr.newFrameReady(frame_info); 
 	  
-	  ++firelimaimage;
-	  
-	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR7(frame_info, packet, numberOfUDPPacketsToWaitFor,(float)packet/numberOfUDPPacketsToWaitFor*100 ,m_numberOfUDPPacketsPerImage,firelimaimage,m_stopAcquisition);
+ 	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(frame_info, packet, numberOfUDPPacketsToWaitFor,(float)packet/numberOfUDPPacketsToWaitFor*100);
 	  
 	  fireLima = false;
 	  
@@ -846,10 +848,6 @@ lock.lock();
 close(socketUDPImage);
 
 //m_mutexUDPImage.unlock();
- DEB_ALWAYS() << "Out of africa" << DEB_VAR1(m_stopAcquisition);
- DEB_ALWAYS() << "Packet:" << DEB_VAR3(packet, numberOfUDPPacketsToWaitFor ,m_numberOfUDPPacketsPerImage);
- DEB_ALWAYS() << "Lima callback:" << DEB_VAR1(firelimaimage);
- 
 lock.lock();
 m_allImagesReceived = true;
     lock.unlock();
@@ -871,7 +869,6 @@ void pixiradDetector::getImagesInAThread()
   
   
   // All in one thread (slow but reliable)
-  DEB_ALWAYS() << "out of africa 2";
   AutoMutex lock(m_cond.mutex());
   if(m_imageThread.joinable()){
     m_stopAcquisition = true;

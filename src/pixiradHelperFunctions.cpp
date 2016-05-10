@@ -107,7 +107,6 @@ double fractions[]=
 
   bool lima::Pixirad::findThisValueIn(regex_t regex, string whereToLook, float &result, Cond m_cond_regexExtract)
 {
-  AutoMutex lock(m_cond_regexExtract.mutex());
 //   DEB_MEMBER_FUNCT();
   bool success = false;
 
@@ -122,14 +121,16 @@ double fractions[]=
   /* Execute regular expression */
   reti = regexec(&regex, whereToLook.c_str(),nmatch, pmatch, 0);
   if (!reti) {
-    
     int start = pmatch[1].rm_so;
     int end = pmatch[1].rm_eo;
     
 //     fprintf(stderr, "start %i , end %i \n", start, end);
     
     std::string subChain = whereToLook.substr (start,end-start); 
+    
+  AutoMutex lock(m_cond_regexExtract.mutex());
     result = (float)::atof(subChain.c_str());   
+   lock.unlock();
     success = true;
   }
   else if (reti == REG_NOMATCH) {
