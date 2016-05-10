@@ -308,7 +308,7 @@ public:
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
 //   int m_nbOfFrameInReconstructionBuffer = 32;
-  int m_nbOfFrameInReconstructionBuffer = 256;
+  int m_nbOfFrameInReconstructionBuffer = 128;
   
   
   
@@ -505,6 +505,9 @@ public:
   std::thread m_imageThreadDispatchLoop;
   std::thread m_boxHumidityTempMonitor;
   Cond m_cond;
+  Cond m_cond_regexExtract;
+  
+  
 private:
   std::string m_ipAdressDetector = "192.168.0.1";
   int m_TcpPort = 2222;

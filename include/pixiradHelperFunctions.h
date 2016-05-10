@@ -18,8 +18,10 @@ namespace lima {
     #define	 VTH1_ACCURACY 1.0e-3
     #define  INT_DAC_STEPS	32
     
-    bool findThisValueIn(regex_t regex, string whereToLook, float &result);
-      
+    bool findThisValueIn(regex_t regex, string whereToLook, float &result, Cond m_cond_regexExtract);
+    
+//       Cond m_cond;
+
       
       int PIXIEIIThresholdCalculator(int VthmaxUpperLimit, double *requestedEnergy_ptr, int *VThMax_ptr, int *thresholdRegisters_ptr, double *actualEnergy_ptr);
       

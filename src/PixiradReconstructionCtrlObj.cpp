@@ -104,6 +104,7 @@ Data  _ReconstructionTask::process(Data& src)
      ushort *destinationAsInt = reinterpret_cast<ushort*>(destination);   
      
      
+     DEB_TRACE()<<"Pointers in reconstruction task: "<< DEB_VAR2(source,destination);
      
      DEB_TRACE()<< "FPGA Conversion " << DEB_VAR1(m_nbmodules); // the hard way 
      
@@ -285,8 +286,9 @@ ReconstructionCtrlObj::~ReconstructionCtrlObj()
 void ReconstructionCtrlObj::prepareAcq()
 {
   DEB_MEMBER_FUNCT();
-  
+  AutoMutex lock(m_cam.m_pixirad->m_cond.mutex());
   m_task->setBuffer(m_cam.m_pixirad->m_reconstructionBufferCtrlObj);
+  
   m_task->setNbModules(m_cam.m_pixirad->m_nbModules);
   
   m_task->setAllocationTable(m_cam.m_pixirad->m_conversion_table);

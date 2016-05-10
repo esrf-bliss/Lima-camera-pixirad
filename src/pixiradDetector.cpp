@@ -69,8 +69,8 @@ using namespace lima::Pixirad;
   
   setStatusDetector(HwInterface::StatusType::Config);
   
- 
-   m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
+ // 
+//    m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
 //   setStatusDetector(HwInterface::StatusType::Ready);
   
@@ -144,6 +144,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
       regex_t regex;  // pixi8 or all
       regex_t regexpixi1style; // pixi1 only
 	
+	AutoMutex lock(m_cond_regexExtract.mutex());
+	
       
       while (1){
 	bytes_recvd=0;
@@ -166,8 +168,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	regcomp(&regex, "READ_TCOLD_DONE ([-0123456789.]+)",  REG_EXTENDED);
 	regcomp(&regexpixi1style, "READ_TCOLD ([-0123456789.]+)",  REG_EXTENDED);
 	
-	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierCold) 
-	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierCold) 
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierCold, m_cond_regexExtract) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierCold, m_cond_regexExtract) 
 	){		
 //  	  DEB_TRACE() << "Cold side of the peltier : "<<DEB_VAR1(m_temperaturePeltierCold);
  	}
@@ -182,8 +184,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	regcomp(&regex, "READ_THOT_DONE ([-0123456789.]+)",  REG_EXTENDED);
 	regcomp(&regexpixi1style, "READ_THOT ([-0123456789.]+)",  REG_EXTENDED);
 	
-	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierHot) 
-	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierHot) 
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_temperaturePeltierHot, m_cond_regexExtract) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_temperaturePeltierHot, m_cond_regexExtract) 
 	){		
 // 	  DEB_TRACE() << "Hot side of the peltier : "<<DEB_VAR1(m_temperaturePeltierHot);
 	}
@@ -199,8 +201,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	regcomp(&regex, "READ_HV_DONE ([-0123456789.]+)",  REG_EXTENDED);
 	regcomp(&regexpixi1style, "READ_HV ([-0123456789.]+)",  REG_EXTENDED);
 	
-	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_HighVoltageTension) 
-	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_HighVoltageTension) 
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_HighVoltageTension, m_cond_regexExtract) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_HighVoltageTension, m_cond_regexExtract) 
 	){	
 // 	  DEB_TRACE() << "HV tension : "<<DEB_VAR1(m_HighVoltageTension);
 	}
@@ -214,8 +216,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// 	READ_BOX_RH 27.25 %
 	regcomp(&regex, "READ_BOX_RH ([-0123456789.]+)",  REG_EXTENDED);
 	regcomp(&regexpixi1style, "READ_BOX_HUM ([-0123456789.]+)",  REG_EXTENDED);
-	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxHumidity) 
-	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxHumidity) 
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxHumidity, m_cond_regexExtract) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxHumidity, m_cond_regexExtract) 
 	){		
 // 	  DEB_TRACE() << "Humidity : "<<DEB_VAR1(m_boxHumidity);
 	}
@@ -229,8 +231,8 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	regcomp(&regex, "READ_BOX_TEMP_DONE ([-0123456789.]+)",  REG_EXTENDED);
 	regcomp(&regexpixi1style, "READ_BOX_TEMP ([-0123456789.]+)",  REG_EXTENDED);
-	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxTemperature) 
-	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxTemperature) 
+	if ( lima::Pixirad::findThisValueIn(regex , std::string(weather), m_boxTemperature, m_cond_regexExtract) 
+	  or lima::Pixirad::findThisValueIn(regexpixi1style , std::string(weather), m_boxTemperature, m_cond_regexExtract) 
 	){	
 // 	  DEB_TRACE() << "Box temperature : "<<DEB_VAR1(m_boxTemperature);
 	}
@@ -244,7 +246,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 // 	READ_PELTIER_PWR 0.00 %
 	
 	regcomp(&regex, "READ_PELTIER_PWR ([-0123456789.]+)",  REG_EXTENDED);
-	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_peltierPower)){	
+	if (lima::Pixirad::findThisValueIn(regex , std::string(weather), m_peltierPower, m_cond_regexExtract)){	
 // 	  DEB_TRACE() << "Peltier Power : "<<DEB_VAR1(m_peltierPower);
 	}
 	else DEB_TRACE() << "NO PELTIER POWER INFO IN WEATHER STREAM " << DEB_VAR1(weather);
@@ -258,23 +260,31 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// Alarm for HOT PELTIER
 	regcomp(&regex, ".*THOT_ALARM_STATUS OFF.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  
+	  lock.lock();
+
 	  m_alarmTempTooHot = false;
 	  m_alarmTempTooHotEnabled = true;	  
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
+	  lock.unlock();
 	}	
 	regfree(&regex);
 	regcomp(&regex, ".*THOT_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmTempTooHot = true;
 	  m_alarmTempTooHotEnabled = true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
+	  lock.unlock();
 	}
 	regfree(&regex);
 	regcomp(&regex, ".*THOT_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmTempTooHot = false;
 	  m_alarmTempTooHotEnabled = false;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooHot, m_alarmTempTooHotEnabled);
+	  lock.unlock();
 	}
 	regfree(&regex);
 	
@@ -283,27 +293,33 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// Alarm for COLD PELTIER
 	regcomp(&regex, ".*TCOLD_ALARM_STATUS OFF.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmTempTooCold = false;
 	  m_alarmTempTooColdEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
+	  lock.unlock();
 	}	
 	regfree(&regex);
 	
 	
 	regcomp(&regex, ".*TCOLD_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmTempTooCold = true;
 	  m_alarmTempTooColdEnabled= true;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
+	  lock.unlock();
 	}	
 	regfree(&regex);
 	
 	
 	regcomp(&regex, ".*TCOLD_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmTempTooCold = false;
 	  m_alarmTempTooColdEnabled= false;
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmTempTooCold, m_alarmTempTooColdEnabled);
+	  lock.unlock();
 	}
 	regfree(&regex);
 	
@@ -312,8 +328,10 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	// Alarm for HUMIDITY
 	regcomp(&regex, ".*HUMIDITY_ALARM_STATUS OFF.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmHumidity = false;
 	  m_alarmHumidityEnabled= true;
+	  lock.unlock();
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}	
 	
@@ -322,24 +340,31 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	regcomp(&regex, ".*HUMIDITY_ALARM_STATUS ON.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmHumidity = true;
 	  m_alarmHumidityEnabled= true;
+	  lock.unlock();
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}
 	regfree(&regex);
 	
 	regcomp(&regex, ".*HUMIDITY_ALARM_STATUS DISABLED.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  m_alarmHumidity = false;
 	  m_alarmHumidityEnabled= false;
+	  lock.unlock();
 // 	  DEB_TRACE() << "Alarm : "<<DEB_VAR2(m_alarmHumidity, m_alarmHumidityEnabled);
 	}
 	regfree(&regex);
 	
 	// There is no alarm feedback for the PX1. Humidity is nice too know.
+	  
+	  lock.lock();
+	  
 	if(m_sensorConfigBuild == "PX1" and m_boxHumidity >= 2){
 	  // Forcing alarm if humidity more than 2%
-	  m_alarmHumidity = true;	  
+	  m_alarmHumidity = true;
 	}
 	
 	if(m_sensorConfigBuild == "PX1" and m_boxHumidity < 2){
@@ -349,25 +374,27 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	
 	if(m_sensorConfigBuild == "PX1" and m_boxTemperature >= 30){
 	  // Forcing alarm if humidity more than 2%
-	  m_alarmTempTooHot = true;	 
+	  m_alarmTempTooHot = true;	
 	}
 	
 	if(m_sensorConfigBuild == "PX1" and m_boxTemperature <= 8){
 	  // Forcing alarm if humidity more than 2%
-	  m_alarmTempTooCold = true;	  
+	  m_alarmTempTooCold = true;	
 	}
 	
 	if(m_sensorConfigBuild == "PX1" and m_boxTemperature > 8 and m_boxTemperature < 30){
 	  // Forcing alarm if humidity more than 2%
 	  m_alarmTempTooCold = false;	  
-	  m_alarmTempTooHot = false;	  
+	  m_alarmTempTooHot = false;	 
 	}
 	
 	
+	  lock.unlock();	  
 	
 	
 	regcomp(&regex, ".*PIXIRAD-8 SN 8000.*" , 0);
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
+	  lock.lock();
 	  if (m_sensorConfigBuild != "PX8"){ // Only first time
 	    m_sensorConfigAsic = "PII";
 	    m_sensorConfigHybrid = "CDTE"; // CDTE GAAS
@@ -377,10 +404,12 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	    
 	    DEB_TRACE() << "A pixirad 8 model has been detected - AUTOCONFIGURATION based on UDP stream";
 	  }
+	  lock.unlock();
 	}	
 	regfree(&regex);
 	
 	regcomp(&regex, ".*BOX_SERIAL 1018.*" , 0);
+	  lock.lock();
 	if ( regexec(&regex, weather, 0, NULL, 0) == 0 ){
 	  if (m_sensorConfigBuild != "PX1"){
 	    m_sensorConfigAsic = "PII";
@@ -390,6 +419,7 @@ void pixiradDetector::boxHumidityTempMonitor(){
 	    m_nbModules = 1;
 	    DEB_TRACE() << "A pixirad 1 model has been detected  - AUTOCONFIGURATION based on UDP stream";	  
 	  }
+	  lock.unlock();
 	}
 	regfree(&regex);
 	
@@ -443,6 +473,7 @@ void pixiradDetector::prepareAcq()
   // Prepare new buffer for reconstruction tasks
   // This may have changed due to acquisition option, so lets have it at each new set of images request.
   
+    AutoMutex lock(m_cond_regexExtract.mutex());
   if(m_sensorConfigBuild.compare("PX1") == 0){ 
     m_nbModules = 1;
     m_UdpPortImages = 2223;
@@ -459,6 +490,7 @@ void pixiradDetector::prepareAcq()
     
     m_UdpPortImages = 9999;
   }
+    lock.unlock();
   
   FrameDim      myFrameDim;  
   myFrameDim.setImageType(Bpp16);  
@@ -500,6 +532,7 @@ void pixiradDetector::getSize(Size &size){
 
   DEB_MEMBER_FUNCT();
   
+    AutoMutex lock(m_cond_regexExtract.mutex());
   if(m_sensorConfigBuild.compare("PX1") == 0){ 
       size = Size(476, 512);  // what it should be
 //     size = Size(512, 476);
@@ -516,6 +549,7 @@ void pixiradDetector::getSize(Size &size){
   
   }
   
+    lock.unlock();
     DEB_TRACE() << "Size has been configured by detector class as :" << DEB_VAR1(size);
   
   
@@ -571,8 +605,11 @@ void pixiradDetector::getImages()
   
   
   //////////////////  Receiving //////////////
+  
+	  AutoMutex lock(m_cond_regexExtract.mutex());
   if(m_sensorConfigBuild == "PX8" ){ m_UdpPortImages = 9999; }  
   else { m_UdpPortImages = 2223; }
+  lock.unlock();
   
   
   memset((unsigned char *) &sockaddrInUDP, 0, sizeof(sockaddrInUDP));
@@ -679,6 +716,7 @@ void pixiradDetector::getImages()
 
   int lastDatagramToKeep = 0;
   int amountOfTheLastDatagramToKeep = 0;
+lock.lock();
   if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
     amountOfTheLastDatagramToKeep= 960;
@@ -690,15 +728,15 @@ void pixiradDetector::getImages()
     m_numberOfUDPPacketsPerImage = 360; 
   }
   
+  lock.unlock();
 
   // For this acquisition we will have (m_number might change):
   int numberOfUDPPacketsToWaitFor  = (m_numberOfUDPPacketsPerImage)*m_nbFramesAcq;
 
-  DEB_ALWAYS()<< "Waiting for UDP datagrams"<< DEB_VAR3(numberOfUDPPacketsToWaitFor, m_numberOfUDPPacketsPerImage, m_nbFramesAcq ) ;
   
   
   for(packet = 0 ; packet < numberOfUDPPacketsToWaitFor; packet++  ){
-    AutoMutex lock(m_cond.mutex());
+    lock.lock();
     if(m_stopAcquisition) break;
     lock.unlock();
 
@@ -733,11 +771,13 @@ void pixiradDetector::getImages()
 	
 	while (iDontKnowMyPlace) { // and slotId<=m_nbFramesAcq)
 	  
-	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
+	  if(acknowledgator[slotId] <= lastDatagramToKeep - 1){
+// 	  if(acknowledgator[slotId] <= lastDatagramToKeep - 2){
 	    iDontKnowMyPlace = false; 	    
 	    acknowledgator[slotId] = acknowledgator[slotId] +1;
 	  }
-	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+// 	  else if(acknowledgator[slotId] == lastDatagramToKeep - 1 ){
+	  else if(acknowledgator[slotId] == lastDatagramToKeep  ){
 	    
 	    DEB_TRACE() << "Image is completely received " <<DEB_VAR1(slotId);	
 	    
@@ -745,7 +785,8 @@ void pixiradDetector::getImages()
 	    iDontKnowMyPlace = false; 
 	    fireLima = true;
 	  }
-	  if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
+	  if( (not fireLima) and acknowledgator[slotId] > lastDatagramToKeep){
+// 	  if( (not fireLima) and acknowledgator[slotId] >= lastDatagramToKeep){
 	    slotId = slotId + 256;
 	    iDontKnowMyPlace = true; // Still true, could be more than 512
 	  }
@@ -775,8 +816,10 @@ void pixiradDetector::getImages()
 	  DEB_TRACE() << DEB_VAR2(frame_info, slotId);
 	  
 	  finalBufferMgr.newFrameReady(frame_info); 
+	  
 	  ++firelimaimage;
-	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR5(frame_info, packet, (float)packet/numberOfUDPPacketsToWaitFor*100 ,m_numberOfUDPPacketsPerImage,firelimaimage);
+	  
+	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR7(frame_info, packet, numberOfUDPPacketsToWaitFor,(float)packet/numberOfUDPPacketsToWaitFor*100 ,m_numberOfUDPPacketsPerImage,firelimaimage,m_stopAcquisition);
 	  
 	  fireLima = false;
 	  
@@ -807,7 +850,7 @@ close(socketUDPImage);
  DEB_ALWAYS() << "Packet:" << DEB_VAR3(packet, numberOfUDPPacketsToWaitFor ,m_numberOfUDPPacketsPerImage);
  DEB_ALWAYS() << "Lima callback:" << DEB_VAR1(firelimaimage);
  
-  AutoMutex lock(m_cond.mutex());
+lock.lock();
 m_allImagesReceived = true;
     lock.unlock();
 }
@@ -890,7 +933,7 @@ void pixiradDetector::getImagesInAThread()
 
 void pixiradDetector::recvLoopForImageUDPStream(){
   DEB_MEMBER_FUNCT();
- 
+ /*
   //////////////////// REAL TIME  /////////////////////////////
   // Going to a real time fifo mode to be sure to not loose any udp packets.
   pthread_t this_thread = pthread_self(); 
@@ -1099,6 +1142,7 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
   
   m_numberOfUDPPacketsPerImage = 0;
   
+	  AutoMutex lock(m_cond_regexExtract.mutex());
   if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
     amountOfTheLastDatagramToKeep= 960;
@@ -1110,6 +1154,7 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
     m_numberOfUDPPacketsPerImage = 360; 
   }
   
+  lock.unlock();
   DEB_TRACE()<< "Dispatch loop detector parameters "<<DEB_VAR5(m_sensorConfigBuild, m_nbModules,lastDatagramToKeep,m_numberOfUDPPacketsPerImage,amountOfTheLastDatagramToKeep); // Comment this out after debug.
 	  
 	  
@@ -1175,7 +1220,7 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
  		 DEB_TRACE()<< "1";
 	    
 // 		  unsigned short   packetTag=*buf;
-		  unsigned short   packetTag=(unsigned short)buf[0];
+// 		  unsigned short   packetTag=(unsigned short)buf[0];
 		
 // 		 DEB_TRACE()<< "2   "<<DEB_VAR3(packetTag,  buf,messyBuffer[localCopyOfPositionWithinMessyBuffer*1448]);
 		//TODO: Autocal
@@ -1351,11 +1396,11 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   
 //   pthread_mutex_lock(&m_mutex);
   
+  std::unique_lock<std::mutex> uniqLock(m_mutexCommandTCP);
   // flushing answer buffer
   for(int i = 0 ; i<MAX_MSG_STR_LENGTH; i++){commandAnswerFromDetector[i]='\0';}
   
   
-  std::unique_lock<std::mutex> uniqLock(m_mutexCommandTCP);
   
   int m_socketToPixiradServer = 0;
   
@@ -1432,7 +1477,7 @@ int pixiradDetector::sendCommand(std::string command, char commandAnswerFromDete
   close(m_socketToPixiradServer);
   // release the cracken
 //    pthread_mutex_unlock(&m_mutexCommandTCP);
-  
+ uniqLock.unlock();
   return resultConnection + resultConnection2;
  // return &commandAnswerFromDetector;
 }
@@ -1497,6 +1542,7 @@ void pixiradDetector::setStatusDetector(HwInterface::StatusType::Basic status){
 void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status){ 
   //         mutex
   DEB_MEMBER_FUNCT();
+   AutoMutex lock(m_cond_regexExtract.mutex());
   
   char detectorStatusFromDetector[MAX_MSG_STR_LENGTH] = "";
   // Warning: the doc says SYS:? GET_ACQUISTION_STATUS , I prefer to send an extra I.
@@ -1506,7 +1552,6 @@ void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status)
   
 //   TODO:  CASES ON WHAT DETECTOR SAYS.
   
-  std::unique_lock<std::mutex> uniqLock(m_mutexStatus);
   
   regex_t regex;
   
@@ -1545,15 +1590,14 @@ void pixiradDetector::getStatusDetector(HwInterface::StatusType::Basic & status)
   
   
   
-   AutoMutex lock(m_cond.mutex());
   if(m_allImagesReceived == false){
     DEB_TRACE() << "All images not received, status forced to readout, no matter what the detector said. Use printMissingImageInfo() to get more infos";
     
     m_pixiradStatus = HwInterface::StatusType::Readout;
   }
-  lock.unlock();
   status = m_pixiradStatus;
   DEB_TRACE() << "Access to status " << DEB_VAR2(m_pixiradStatus, status);
+  lock.unlock();
   
 }
 
@@ -1575,6 +1619,7 @@ void pixiradDetector::printMissingImageInfo(){
   DEB_TRACE() << "Searching for incomplete images.";
   
   int lastDatagramToKeep = 0;
+	  AutoMutex lock(m_cond_regexExtract.mutex());
   if (m_sensorConfigBuild == "PX8" and m_nbModules == 8){
     lastDatagramToKeep = 2538;
   }
@@ -1582,6 +1627,7 @@ void pixiradDetector::printMissingImageInfo(){
     lastDatagramToKeep = 317;
   }
   
+  lock.unlock();
   
   for (int img = 0; img<m_nbFramesAcq; img++){
     

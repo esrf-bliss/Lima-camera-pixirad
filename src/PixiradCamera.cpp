@@ -1529,7 +1529,10 @@ void lima::Pixirad::Camera::getTrsfMode(TrsfMode &mode){
 
 
 void lima::Pixirad::Camera::getTemperaturePeltierCold(float & information){
-  DEB_MEMBER_FUNCT();        
+  DEB_MEMBER_FUNCT();   
+  
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
+  
   information = m_pixirad->m_temperaturePeltierCold;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_temperaturePeltierCold, information);
   
@@ -1542,30 +1545,35 @@ void lima::Pixirad::Camera::getTemperaturePeltierCold(float & information){
 
 void lima::Pixirad::Camera::getTemperaturePeltierHot(float& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_temperaturePeltierHot;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_temperaturePeltierHot, information);
   
 }
 void lima::Pixirad::Camera::getHighVoltageTension(float& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_HighVoltageTension;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_HighVoltageTension, information);
   
 }
 void lima::Pixirad::Camera::getBoxHumidity(float& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_boxHumidity;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_boxHumidity, information);
   
 }
 void lima::Pixirad::Camera::getBoxTemperature(float& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_boxTemperature;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_boxTemperature, information);
   
 }
 void lima::Pixirad::Camera::getPeltierPower(float& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_peltierPower;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_peltierPower, information);
   
@@ -1573,36 +1581,42 @@ void lima::Pixirad::Camera::getPeltierPower(float& information){
 
 void lima::Pixirad::Camera::getAlarmTempTooHot(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmTempTooHot;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmTempTooHot, information);
   
 }
 void lima::Pixirad::Camera::getAlarmTempTooHotEnabled(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmTempTooHotEnabled;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmTempTooHotEnabled, information);
   
 }
 void lima::Pixirad::Camera::getAlarmTempTooCold(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmTempTooCold;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmTempTooCold, information);
   
 }
 void lima::Pixirad::Camera::getAlarmTempTooColdEnabled(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmTempTooColdEnabled;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmTempTooColdEnabled, information);
   
 }
 void lima::Pixirad::Camera::getAlarmHumidity(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmHumidity;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmHumidity, information);
   
 }
 void lima::Pixirad::Camera::getAlarmHumidityEnabled(bool& information){
   DEB_MEMBER_FUNCT();        
+  AutoMutex lock(m_pixirad->m_cond_regexExtract.mutex());
   information = m_pixirad->m_alarmHumidityEnabled;
   DEB_TRACE() << DEB_VAR2(m_pixirad->m_alarmHumidityEnabled, information);
   
