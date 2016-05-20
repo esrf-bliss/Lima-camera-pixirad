@@ -69,6 +69,9 @@ using namespace lima::Pixirad;
   
   setStatusDetector(HwInterface::StatusType::Config);
   
+  
+  // Test for a blocking object initialisation:
+  m_sensorConfigBuild = "Not Discovered";
  // 
     m_boxHumidityTempMonitor =  std::thread(&pixiradDetector::boxHumidityTempMonitor, this);
   
@@ -89,7 +92,15 @@ using namespace lima::Pixirad;
      
   
      
-     
+  // Test for a blocking object initialisation:
+     bool AutoconfigurationPending = true; 
+     while(AutoconfigurationPending){ 
+	  AutoMutex lock(m_cond_regexExtract.mutex());
+	  if (m_sensorConfigBuild != "Not Discovered"){AutoconfigurationPending = false;}
+	DEB_TRACE() << "Waiting for detector detection on " << DEB_VAR2(ipAdressDetector, m_sensorConfigBuild);
+	  lock.unlock();
+       sleep(1);
+     }
      
      //m_bufferCtrlObj = new SoftBufferCtrlObj(); // Already in prepare
     
