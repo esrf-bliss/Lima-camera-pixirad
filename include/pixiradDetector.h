@@ -35,7 +35,7 @@ class pixiradDetector {
 public:
   
 //   pixiradDetector(std::string ipAdressDetectorServer, int TcpPort);
-  pixiradDetector(std::string ipAdressDetectorServer, int TcpPort,SoftBufferCtrlObj& buffer);
+  pixiradDetector(std::string ipAdressDetectorServer, int TcpPort,SoftBufferCtrlObj& buffer, std::string sensorConfigBuild);
   ~pixiradDetector();
   
   #define MAX_BOX_NUMBER 20

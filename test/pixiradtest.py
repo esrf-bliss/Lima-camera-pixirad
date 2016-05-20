@@ -66,7 +66,7 @@ print "\n\n\n\n ======= INIT ======== \n"
 
 
 #camera = PixiradAcq.Camera("172.24.8.135", 6666)
-camera = PixiradAcq.Camera("192.168.0.1", 2222)
+camera = PixiradAcq.Camera("192.168.0.1", 2222, "PX8")
 
 camera.init()  ### Verifier INIT TODO
 
@@ -93,7 +93,7 @@ camera_interface.setRunConfigMode(camera.DATA)
 camera_interface.setHybridMode(camera.CDTE)
 
 #camera_interface.setSensorConfigBuild(camera.PX1)
-camera_interface.setSensorConfigBuild(camera.PX8)
+#camera_interface.setSensorConfigBuild(camera.PX8)
 
 camera_interface.setColorMode(camera.COLMODE_1COL0)
 

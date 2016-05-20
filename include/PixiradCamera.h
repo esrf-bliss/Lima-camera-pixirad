@@ -59,11 +59,11 @@ DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Pixirad");
 
 public:
 
-	Camera(std::string hostname, int cmdPort = 6341);
+	Camera(std::string hostname="uninitialised", int cmdPort = 6341, std::string sensorConfigBuild="PX8");
 	~Camera();
             
             
-
+  std::string m_sensorConfigBuild;
 	
     
 	void init();

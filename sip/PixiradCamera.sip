@@ -38,7 +38,7 @@ using namespace lima;
     public:
 
 
-        Camera(std::string hostname, int cmdPort = 6341);
+        Camera(std::string hostname, int cmdPort = 6341, std::string sensorConfigBuild = "PX8");
 
 //        enum DetectorStatus { // To be kept for getDetecorStatus
 //            IDLE, ///< Detector idle

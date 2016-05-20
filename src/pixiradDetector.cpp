@@ -59,7 +59,7 @@ using namespace lima::Pixirad;
 
 
 
- pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, SoftBufferCtrlObj& buffer): m_bufferCtrlObj(buffer), m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) {
+ pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort, SoftBufferCtrlObj& buffer, std::string sensorConfigBuild): m_bufferCtrlObj(buffer), m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) , m_sensorConfigBuild(sensorConfigBuild){
 //   pixiradDetector::pixiradDetector(std::string ipAdressDetector, int TcpPort m_ipAdressDetector(ipAdressDetector), m_TcpPort(TcpPort) {
   
   DEB_CONSTRUCTOR();
@@ -88,6 +88,9 @@ using namespace lima::Pixirad;
      b_stream.close();
      
   
+     
+     
+     
      //m_bufferCtrlObj = new SoftBufferCtrlObj(); // Already in prepare
     
 }

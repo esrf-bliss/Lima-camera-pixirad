@@ -49,17 +49,17 @@ using namespace lima;
 using namespace lima::Pixirad;
 using namespace std;
 
-lima::Pixirad::Camera::Camera(std::string hostname, int tcpPort) :
-  m_hostname(hostname), m_tcpPort(tcpPort) {
+lima::Pixirad::Camera::Camera(std::string hostname, int tcpPort, std::string sensorConfigBuild) :
+  m_hostname(hostname), m_tcpPort(tcpPort), m_sensorConfigBuild(sensorConfigBuild) {
 
 	DEB_CONSTRUCTOR();
    
-	DEB_TRACE() << "Pixirad attemping to create detector object for : " << DEB_VAR2(m_hostname, m_tcpPort);
+	DEB_TRACE() << "Pixirad attemping to create detector object for : " << DEB_VAR3(m_hostname, m_tcpPort, sensorConfigBuild);
     
 //        pixiradDetector *m_pixirad = new pixiradDetector(m_hostname, m_tcpPort);
 //   	m_bufferCtrlObj = new SoftBufferCtrlObj(); 
 	
-        m_pixirad = new pixiradDetector(m_hostname, m_tcpPort, m_bufferCtrlObj);
+        m_pixirad = new pixiradDetector(m_hostname, m_tcpPort, m_bufferCtrlObj, m_sensorConfigBuild );
 	
 	init();
 
