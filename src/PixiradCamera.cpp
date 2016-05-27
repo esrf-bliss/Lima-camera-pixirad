@@ -484,7 +484,7 @@ void lima::Pixirad::Camera::startAcq() {
     
     m_pixirad->getImagesInAThread();
     
-	
+// 	DAQ:! LOOP Frames Shutt_ms Pause_ms RunMode TrgMode TrsfMode HVMngmt
 	std::string command;
 	command = string("DAQ:! LOOP "+ to_string(m_pixirad->m_nbFramesAcq) +" " + to_string(m_pixirad->m_shutterMs) +" " +to_string(m_pixirad->m_pauseBetweenAcq) +" " +m_pixirad->m_RunModeColors  +" " +m_pixirad->m_TriggerMode  +" " +m_pixirad->m_moderationMode +" " +m_pixirad->m_HvMode);
 	
@@ -698,19 +698,22 @@ void lima::Pixirad::Camera::setLatTime(double lat_time) {
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "Set latency time (s)" << DEB_VAR1(lat_time);
         
-        
-        m_pixirad->m_pauseBetweenAcq = lat_time * 1000;
-	DEB_TRACE() << "Latency time setted for (ms): " << DEB_VAR1(m_pixirad->m_pauseBetweenAcq);
+        if (lat_time> m_pixirad->latency_measured/1000){
+	  m_pixirad->m_pauseBetweenAcq = lat_time * 1000 - m_pixirad->latency_measured;
+	}
+	DEB_TRACE() << "Latency time setted for (ms): " << DEB_VAR2(m_pixirad->m_pauseBetweenAcq,m_pixirad->latency_measured);
 }
 
 void lima::Pixirad::Camera::getLatTime(double& lat_time) {
 	DEB_MEMBER_FUNCT();
-	lat_time = m_pixirad->m_pauseBetweenAcq / 1000 + m_pixirad->latency_measured;
+	lat_time = m_pixirad->m_pauseBetweenAcq / 1000 + m_pixirad->latency_measured/1000;
+	//lat_time =0.038
+	
 }
 
 void lima::Pixirad::Camera::getExposureTimeRange(double& min_expo, double& max_expo) const {
 	DEB_MEMBER_FUNCT();
-	min_expo = 1/1000 ;
+	min_expo = 0.001 ;
 	max_expo = 999; // Waiting for an answer from Massimo
 	DEB_RETURN() << DEB_VAR2(min_expo, max_expo);
 }

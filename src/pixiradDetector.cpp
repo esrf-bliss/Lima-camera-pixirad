@@ -755,7 +755,7 @@ lock.lock();
   
   for(packet = 0 ; packet < numberOfUDPPacketsToWaitFor; packet++  ){
     lock.lock();
-    if(m_stopAcquisition) break;
+     if(m_stopAcquisition) break;
     lock.unlock();
 
       int realpacketsize = recvfrom(socketUDPImage, (char*)buf, MAX_PACK_LEN,  0, NULL, 0);
@@ -853,6 +853,7 @@ lock.lock();
 
   }
 
+    lock.unlock(); // Yes in case we break the loop (stopAcq)
 //   free(acknowledgator);
 //   // Banzai
 //   m_imageThread.detach();
@@ -889,11 +890,12 @@ void pixiradDetector::getImagesInAThread()
     lock.unlock();
     DEB_TRACE() << "A PREVIOUS IMAGE THREAD IS STILL ALIVE" << DEB_VAR1(m_imageThread.get_id());
     m_imageThread.join();
-    lock.lock();
   }
   
   DEB_TRACE() << "Creation of an independant thread for image reception." ;
+  //lock.lock();
   m_stopAcquisition = false;
+//  lock.unlock();
   m_imageThread =  std::thread(&pixiradDetector::getImages, this);
   
 
@@ -1660,7 +1662,7 @@ void pixiradDetector::stopAcq(){
   DEB_MEMBER_FUNCT();
   DEB_ALWAYS() << "STOPACQ():  ACQUISITION HAS BEEN FORCED TO STOP !!!!  Forcing a stop on the acquisition thread.";
   
-   AutoMutex lock(m_cond.mutex());
+ //  AutoMutex lock(m_cond.mutex());
      m_allImagesReceived = true;
   if(m_imageThread.joinable()){
     m_stopAcquisition = true;
@@ -1671,7 +1673,7 @@ void pixiradDetector::stopAcq(){
     DEB_TRACE() << "No previous image thread pending. No problem then.";
   }
   
-    lock.unlock();
+  //  lock.unlock();
   
   
 }
