@@ -623,14 +623,14 @@ void lima::Pixirad::Camera::getPixelSize(double& sizex, double& sizey) {
 	if(build == PX1){
             DEB_TRACE() << " getPixelSize is selected for a PX1" ;
 	sizex = 60e-6;
-	sizey = 60e-6;
+	sizey = 52e-6;
         }
         
         
         if(build == PX8){
             DEB_TRACE() << " getPixelSize is selected for a PX8" ;
 	sizex = 60e-6;
-	sizey = 60e-6; // TODO: CHANGE FOR PX8 REAL SIZE
+	sizey = 52e-6; // TODO: CHANGE FOR PX8 REAL SIZE
         }
 }
 
@@ -691,7 +691,12 @@ void lima::Pixirad::Camera::setExpTime(double exp_time) {
         if (exp_time * 1000 >= 1){
             m_pixirad->m_shutterMs = exp_time * 1000;
         }
-        else THROW_HW_ERROR(Error) << "Expo time impossible for this detector";
+        else{
+	  DEB_TRACE() << "Expo time impossible for this detector, forcing to 1ms";
+	  m_pixirad->m_shutterMs =1;
+	  
+	}
+	  //THROW_HW_ERROR(Error) << "Expo time impossible for this detector";
 }
 
 void lima::Pixirad::Camera::setLatTime(double lat_time) {
