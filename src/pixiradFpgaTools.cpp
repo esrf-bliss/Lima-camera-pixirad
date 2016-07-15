@@ -167,7 +167,6 @@ int lima::Pixirad::databuffer_sorting(unsigned short *buffer_a, int dout, int ro
     
     
     
-    
 
 //map_data_buffer_on_pixie rearranges data in PIXIE layout taking in account the "snake" readout architecture
 int lima::Pixirad::map_data_buffer_on_pixie(unsigned short *buffer_a, int rows, int cols){

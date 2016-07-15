@@ -147,7 +147,10 @@ control = Core.CtControl(camera_interface)
 
 print control.Status()
 
+#control.buffer().setMaxMemory(70)
 control.buffer().setMaxMemory(70)
+
+
 
 print "\n\n\n\n ======= ACQUISITION OBJECT ======== \n"
 
@@ -159,7 +162,8 @@ def newsave(newsaving, basename):
   pars=newsaving.getParameters()
   #pars.directory='/users/watier/test_du_stagiaire'
   #pars.directory='/data/visitor/md829/id17/Christopher_head_1'
-  pars.directory='/tmp'
+  pars.directory='/data/id06/inhouse/2016/run3/LVP/test_yves_you_can_remove_it_anytime'
+  #pars.directory='/tmp'
   pars.prefix=basename
   pars.suffix='.edf'
   #pars.suffix='.raw'
@@ -168,7 +172,51 @@ def newsave(newsaving, basename):
   pars.savingMode=Core.CtSaving.AutoFrame
   newsaving.setParameters(pars)
   
+def nosave(oldsaving):
+  pars=oldsaving.getParameters()
+  pars.savingMode = Core.CtSaving.Manual
+  oldsaving.setParameters(pars)
+
+    
   
+### On tmp :  
+#In [28]: Core.CtSaving.getWriteTimeStatistic(saving)
+#Out[28]:
+#[0.00434,
+ #0.004409,
+ #0.004924,
+ #0.004639,
+ #0.004064,
+ #0.004387,
+ #0.003881,
+ #0.003834,
+ #0.0034,
+ #0.003917,
+ #0.00335,
+ #0.004025,
+ #0.003962,
+ #0.004448,
+ #0.003316,
+ #0.003262]
+
+ #/data/id06/inhouse/2016/run3/LVP/test_yves_you_can_remove_it_anytime
+#Out[5]:
+#[0.038893,
+ #0.039417,
+ #0.039026,
+ #0.039394,
+ #0.039339,
+ #0.039564,
+ #0.039329,
+ #0.039341,
+ #0.039778,
+ #0.039567,
+ #0.039167,
+ #0.039619,
+ #0.040645,
+ #0.039552,
+ #0.039744,
+ #0.040889]
 
   
 #newsave(saving , time.strftime('TestPX8_on_ID17_firsttest_%Y_%m_%d-%H_%M_%S'))
@@ -193,7 +241,7 @@ def internalTrigger():
 
 print control.Status()
 
-newsave(saving , time.strftime('TestPX8_change_filename_with_newsave_%Y_%m_%d-%H_%M_%S'))
+#newsave(saving , time.strftime('TestPX8_change_filename_with_newsave_%Y_%m_%d-%H_%M_%S'))
 
 
 acq.setAcqExpoTime(1)
@@ -352,6 +400,41 @@ def accumulation(tempsExpoMax, tempsTotal, nbframes):
   control.startAcq()
 
 
+def testMemAcc():
+    control.buffer().setMaxMemory(5)
+    debugoff()
+    while True:
+        accumulation(0.001, 0.1, 1)
+        while not (control.getStatus().AcquisitionStatus == Core.AcqReady) :
+            time.sleep(1)
+
+def testMemSavingSimple():
+    control.buffer().setMaxMemory(5)
+    debugoff()
+    noAccumulation()
+    newsave(saving, "testouille6")
+    while True:
+        control.prepareAcq()
+        control.startAcq()
+        while not (control.getStatus().AcquisitionStatus == Core.AcqReady) :
+            time.sleep(1)
+
+def testMemWithoutSaving():
+    control.buffer().setMaxMemory(5)
+    debugoff()
+    noAccumulation()
+    nosave(saving)    
+    while True:
+        control.prepareAcq()
+        control.startAcq()
+        while not (control.getStatus().AcquisitionStatus == Core.AcqReady) :
+            time.sleep(1)
+
+
+
+
+
+
 #def hvscan(duree):
   
   
@@ -488,7 +571,7 @@ class MyCbk(Core.CtControl.ImageStatusCallback) :
 	    latency = np.append(latency, img_status)
 	    try:
 	      im = control.ReadImage()
-	      print str(time.time()),' Reconstruction latency: ', img_status.LastImageAcquired - img_status.LastImageSaved, " img timestamp: ", im.timestamp, " frame: ",im.frameNumber
+	      print str(time.time()),' Reconstruction + saving latency: ', img_status.LastImageAcquired - img_status.LastImageSaved, " img timestamp: ", im.timestamp, " frame: ",im.frameNumber
 	    except Exception, e:
 	      pass
 	    
@@ -844,3 +927,4 @@ def plot():
 
 #time.sleep(999999)
 
+#while true; do cat /proc/$(ps -ef | grep -v grep | grep lima_ipython | awk '{print $2}')/status | grep VmSize >> memstats_lima; sleep 0.2; done

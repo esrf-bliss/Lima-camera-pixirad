@@ -558,7 +558,7 @@ int lima::Pixirad::Camera::getNbHwAcquiredFrames() {
 
 void lima::Pixirad::Camera::getImageType(ImageType& type) {
 	DEB_MEMBER_FUNCT();
-	type = lima::Bpp16;
+ 	type = lima::Bpp16;
 }
 
 void lima::Pixirad::Camera::setImageType(ImageType type) {

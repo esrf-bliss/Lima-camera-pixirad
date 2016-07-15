@@ -223,8 +223,8 @@ public:
   std::string m_biaisMode = "AUTOHV"; // BiasMode (S) One of "AUTOHV", "AUTOHV_LC", "STDHV"; 
   //    std::string m_biaisMode = "STDHV"; // BiasMode (S) One of "AUTOHV", "AUTOHV_LC", "STDHV"; 
   int m_tonHvAcquisitionDelay = 1; // If AutoHV, Number of seconds Biais is turned on before aquisition. Acquisition Delay (secs.) from the HV Turn On; 
-  int m_toffHvAcquisitionDelay = 4; // ToffDelay (F) HV Refresh cycle duration (secs.); 
-  int m_HvRefreshPeriod = 5; //RefreshPeriod (N) HV Refresh cycle period (#of frames);
+  int m_toffHvAcquisitionDelay = 400; // ToffDelay (F) HV Refresh cycle duration (secs.); 
+  int m_HvRefreshPeriod = 100000; //RefreshPeriod (N) HV Refresh cycle period (#of frames);
   
   
   // Haha ! Acquisition parameters 
@@ -308,7 +308,7 @@ public:
   SoftBufferCtrlObj* m_reconstructionBufferCtrlObj;
   
 //   int m_nbOfFrameInReconstructionBuffer = 32;
-  int m_nbOfFrameInReconstructionBuffer = 128;
+  int m_nbOfFrameInReconstructionBuffer = 128; //128
   
   
   

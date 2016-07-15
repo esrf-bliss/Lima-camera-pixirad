@@ -91,6 +91,7 @@ using namespace lima::Pixirad;
      b_stream.close();
      
   
+   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
      
   // Test for a blocking object initialisation:
      bool AutoconfigurationPending = true; 
@@ -111,7 +112,8 @@ pixiradDetector::~pixiradDetector(){
   DEB_DESTRUCTOR();
   stopAcq();
 //   delete m_bufferCtrlObj;
-  
+  //delete m_bufferCtrlObj;
+  //delete m_reconstructionBufferCtrlObj;
 }
 
 
@@ -536,7 +538,6 @@ void pixiradDetector::prepareAcq()
   
     
 //     DEB_TRACE() << "Soft Buffer creation :" << DEB_VAR3(myFrameDim, m_nbOfFrameInReconstructionBuffer, mySize);
-   m_reconstructionBufferCtrlObj = new SoftBufferCtrlObj(); //Lolo's m_temp_buffer_ctrl_obj
   m_reconstructionBufferCtrlObj->setFrameDim(myFrameDim);  
   m_reconstructionBufferCtrlObj->setNbBuffers(m_nbOfFrameInReconstructionBuffer);
     
@@ -601,15 +602,22 @@ void pixiradDetector::getImages()
   pthread_t this_thread = pthread_self(); 
   struct sched_param params;     
 
-  params.sched_priority = 99; 
+//   params.sched_priority = 99;  /// Too much priority is a problem for the  saving through NFS.
+  // Check with :
+  //ps faux |grep /users/watier/lima_ipython |grep -v grep |awk '{print $2}'|xargs -I pid echo 'cat /proc/pid/task/*/limits |grep "realtime priority"'
+// ps -eO rtprio -m|grep lima
+//   ps faux |grep /users/watier/lima_ipython |grep -v grep |awk '{print $2}'|xargs -I pid cat /proc/pid/sched
   
-  DEB_TRACE() << "Trying to set thread realtime prio " << DEB_VAR1(params.sched_priority);
+  if(0){
+  params.sched_priority = 1; 
+  
+  DEB_ALWAYS() << "Trying to set thread realtime prio " << DEB_VAR1(params.sched_priority);
   // Attempt to set thread real-time priority to the SCHED_FIFO policy     
   int ret = pthread_setschedparam(this_thread, SCHED_FIFO, &params);     
   if (ret != 0) {         
     DEB_TRACE() << "Sadly I am Unsuccessful in setting a higher thread realtime priority. Add yourself to /etc/security/limits.conf , you deserve it" ;
   }
-  
+  }
   
   
   
@@ -835,7 +843,8 @@ lock.lock();
 	  
 	  finalBufferMgr.newFrameReady(frame_info); 
 	  
- 	  DEB_ALWAYS() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(frame_info, packet, numberOfUDPPacketsToWaitFor,(float)packet/numberOfUDPPacketsToWaitFor*100);
+ 	  DEB_TRACE() << "Image has been published in Lima through newFrameReady." << DEB_VAR4(frame_info, packet, numberOfUDPPacketsToWaitFor,(float)packet/numberOfUDPPacketsToWaitFor*100);
+	  DEB_ALWAYS() << "Image received." << DEB_VAR1(slotId);
 	  
 	  fireLima = false;
 	  
@@ -858,7 +867,10 @@ lock.lock();
 //   // Banzai
 //   m_imageThread.detach();
 
-// free(buf);
+
+//  double free or corruption (out): if freed here
+//free(buf);
+
 
 close(socketUDPImage);
 
@@ -1387,7 +1399,7 @@ void pixiradDetector::dispatchLoopForUDPStreamToIndividualImage(){
   }
   
 
-//   free(acknowledgator);
+   //   free(acknowledgator);
 //   // Banzai
 //   m_imageThread.detach();
 m_allImagesReceived = true;
