@@ -21,31 +21,30 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>.
 ############################################################################
+set(NAME "pixirad")
 
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--add-needed")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(pixirad_srcs src/PixiradCamera.cpp  src/PixiradDetInfoCtrlObj.cpp
+set(${NAME}_srcs src/PixiradCamera.cpp  src/PixiradDetInfoCtrlObj.cpp
 	 src/PixiradInterface.cpp src/PixiradSyncCtrlObj.cpp
 	 src/pixiradDetector.cpp src/PixiradReconstructionCtrlObj.cpp
 	src/pixiradFpgaTools.cpp src/pixiradHelperFunctions.cpp)
 	 
-file(STRINGS "VERSION" pixirad_vers)
-add_library(limapixirad SHARED ${pixirad_srcs})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+add_library(lima${NAME} SHARED ${${NAME}_srcs})
 
 #INCLUDES
-target_include_directories(limapixirad PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(lima${NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 #LIBRARIES
 #NO LIBRARY
 
-target_link_libraries(limapixirad limacore)
+target_link_libraries(lima${NAME} limacore)
 
-set_target_properties(limapixirad PROPERTIES VERSION ${pixirad_vers} SOVERSION "1")
+include(CameraVERSION)
+install(TARGETS lima${NAME} LIBRARY DESTINATION lib)
 
-install(TARGETS limapixirad LIBRARY DESTINATION lib)
-
-if(COMPILE_SIP)
+if(LIMA_ENABLE_PYTHON)
     set(NAME "pixirad")
     include(CameraRunSIP)
     install(FILES python/__init__.py DESTINATION "${PYTHON_SITE_PACKAGES_DIR}/Lima/Pixirad")
