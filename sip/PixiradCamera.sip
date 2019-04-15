@@ -1,7 +1,7 @@
 //###########################################################################
 // This file is part of LImA, a Library for Image Acquisition
 //
-// Copyright (C) : 2009-2011
+// Copyright (C) : 2009-2019
 // European Synchrotron Radiation Facility
 // BP 220, Grenoble 38043
 // FRANCE
@@ -22,7 +22,8 @@
 
 namespace Pixirad {
 
-    class Camera {
+    class Camera /NoDefaultCtors/
+    {
 %TypeHeaderCode
 #include "PixiradCamera.h"
 using namespace lima;
