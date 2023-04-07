@@ -233,7 +233,8 @@ using namespace lima;
 	void resetAllAlarms();
 	
 	void autocalibration();
-
+  private:
+        Camera(const Pixirad::Camera&);
     };
 
 }; // namespace Pixirad

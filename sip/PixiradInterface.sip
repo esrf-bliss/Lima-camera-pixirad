@@ -124,6 +124,9 @@ public:
 	void getAlarmHumidityEnabled(bool& information /Out/ );
 	
 	void autocalibration();
+   private:
+        Interface(const Pixirad::Interface&);
+
 };
 
 }; // namespace Pixirad
