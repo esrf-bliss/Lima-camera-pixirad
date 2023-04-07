@@ -105,7 +105,7 @@ double fractions[]=
 
 
 
-  bool lima::Pixirad::findThisValueIn(regex_t regex, string whereToLook, float &result, Cond m_cond_regexExtract)
+  bool lima::Pixirad::findThisValueIn(regex_t regex, string whereToLook, float &result, Cond &m_cond_regexExtract)
 {
 //   DEB_MEMBER_FUNCT();
   bool success = false;
